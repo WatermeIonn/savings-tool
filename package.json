@@ -1,12 +1,18 @@
 {
-  "name": "next-app-template",
+  "name": "savings-tool",
+  "author": "Daniel Cooper <daniellukecooper@outlook.com>",
   "version": "0.0.1",
   "private": true,
+  "main": "build/electron/main.js",
   "scripts": {
+    "start": "next start",
     "dev": "next dev",
     "build": "next build",
-    "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "postinstall": "electron-builder install-app-deps",
+    "electron:dev": "concurrently \"cross-env BROWSER=none yarn dev\" \"wait-on http://127.0.0.1:3000 && tsc -p electron -w\" \"wait-on http://127.0.0.1:3000 && tsc -p electron && electron .\"",
+    "electron:build": "yarn build && tsc -p electron && electron-builder",
+    "eject": "react-scripts eject"
   },
   "dependencies": {
     "@nextui-org/button": "2.0.15",
@@ -23,22 +29,33 @@
     "@react-aria/ssr": "^3.7.1",
     "@react-aria/visually-hidden": "^3.8.3",
     "@tabler/icons-react": "^2.32.0",
-    "@types/node": "20.5.7",
-    "@types/react": "18.2.21",
-    "@types/react-dom": "18.2.7",
     "autoprefixer": "^10.4.15",
     "clsx": "^2.0.0",
     "eslint": "8.48.0",
     "eslint-config-next": "13.4.19",
     "framer-motion": "^10.16.2",
     "intl-messageformat": "^10.5.0",
-    "next": "13.4.19",
     "next-themes": "^0.2.1",
     "postcss": "^8.4.29",
-    "react": "18.2.0",
-    "react-dom": "18.2.0",
     "tailwind-variants": "^0.1.13",
     "tailwindcss": "^3.3.3",
-    "typescript": "5.0.4"
+    "web-vitals": "^3.1.1"
+  },
+  "devDependencies": {
+    "@types/node": "20.5.7",
+    "@types/react": "18.2.21",
+    "@types/react-dom": "18.2.7",
+    "@types/electron-devtools-installer": "^2.2.2",
+    "concurrently": "^7.6.0",
+    "cross-env": "^7.0.3",
+    "electron": "^23.1.0",
+    "electron-builder": "^23.6.0",
+    "electron-devtools-installer": "^3.2.0",
+    "electron-reload": "^1.5.0",
+    "wait-on": "^7.0.1",
+    "typescript": "5.0.4",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
+    "next": "13.4.19"
   }
 }

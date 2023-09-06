@@ -4,7 +4,7 @@ import GoalsTable from "@/components/goalsTable";
 export default function Home() {
   return (
     <section className="flex flex-col items-center justify-center gap-4 w-full">
-        <GoalsTable heading="Savings Goals"/>
+        <GoalsTable />
     </section>
   );
 }

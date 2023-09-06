@@ -1,45 +1,19 @@
 "use client";
 
 import React, { ChangeEvent, ReactNode, SyntheticEvent, useState } from "react";
-import { GoalDto } from "@/dtos/goal.dto";
 import { Button, Input } from "@nextui-org/react";
-import { buttonClass } from "./primitives";
+import { buttonClass } from "../primitives";
+import { FormInputInterface } from "@/interfaces/FormInputInterface";
+import { inputsToDto } from "@/utils/dto.util";
+import { FormProps } from "@/props/FormProps";
 
-interface AddGoalFormProps {
-  onAdd: (goal: GoalDto) => void;
-  onClose: (e: SyntheticEvent) => void;
-}
-
-interface FormInputInterface {
-  hasError: boolean;
-  errorMessage?: string;
-  label: string;
-  name: string;
-  isRequired: boolean;
-  startContent?: ReactNode;
-  value?: string;
-  type: "string" | "number";
-}
-
-const formInputs: FormInputInterface[] = [
-  {
-    hasError: false,
-    label: "Name",
-    name: "name",
-    isRequired: true,
-    type: "string",
-  },
-  {
-    hasError: false,
-    label: "Price",
-    name: "price",
-    isRequired: true,
-    startContent: "£",
-    type: "number",
-  },
-];
-
-export default function AddGoalButton({ onAdd, onClose }: AddGoalFormProps) {
+export default function Form<T>({
+  onSubmit,
+  onClose,
+  submitText,
+  type,
+  formInputs,
+}: FormProps<T> & { onClose?: (e: SyntheticEvent) => void }) {
   const [inputs, setInputs] = useState<FormInputInterface[]>(formInputs);
 
   const updateInput = (inputToUpdate: FormInputInterface): void => {
@@ -53,7 +27,6 @@ export default function AddGoalButton({ onAdd, onClose }: AddGoalFormProps) {
     setInputs(inputsCopy);
   };
 
-  // TODO: improve validation
   const validateInput = (input: FormInputInterface): boolean => {
     let success = true;
 
@@ -100,20 +73,17 @@ export default function AddGoalButton({ onAdd, onClose }: AddGoalFormProps) {
       return;
     }
 
-    const name = inputs.find((x) => x.name === "name")!.value!;
-    const price = Number(inputs.find((x) => x.name === "price")!.value!);
+    if (onClose) {
+      onClose(e);
+    }
 
-    onClose(e);
-    onAdd(new GoalDto(name, price));
+    onSubmit(inputsToDto(inputs, type));
   };
 
   return (
     <form onSubmit={handleSubmit}>
       {inputs.map(
-        (
-          { isRequired, label, name, startContent, hasError, errorMessage },
-          key
-        ) => (
+        ({ label, name, startContent, hasError, errorMessage }, key) => (
           <Input
             key={key}
             label={label}
@@ -128,7 +98,7 @@ export default function AddGoalButton({ onAdd, onClose }: AddGoalFormProps) {
       )}
       <div className="text-right">
         <Button className={buttonClass.primary} type="submit">
-          Action
+          {submitText ?? "Submit"}
         </Button>
       </div>
     </form>

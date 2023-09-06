@@ -1,38 +1,31 @@
+import { FormInputInterface } from "@/interfaces/FormInputInterface";
 import { randomBytes } from "crypto";
 
 export class GoalDto {
-  public constructor(
-    private _name: string,
-    private _price: number,
-    // TODO: remove these from the constructor
-    private _saved: number = 0,
-    private _id: string = ''
-  ) {
-    this._id = randomBytes(20).toString('hex');
-  }
-
-  public get id(): string {
-    return this._id;
-  }
-
-  public set id(value: string) {
-    this._id = value;
-  }
-
-  public get name(): string {
-    return this._name;
-  }
-
-  public get price(): number {
-    return this._price;
-  }
-
-  public get saved(): number {
-    return this._saved;
-  }
+  // TODO: remove default value. This should be handled in the API
+  public id?: string = randomBytes(20).toString("hex");
+  public name: string;
+  public price: number;
+  public saved: number = 0;
 
   public getPriceToTotal = (totalGoals: number): string => {
-    const priceToTotal = (this._price / totalGoals) * 100;
+    const priceToTotal = (this.price / totalGoals) * 100;
     return priceToTotal.toFixed(1);
   };
+
+  public readonly formInputs: FormInputInterface[] = [
+    {
+      label: "Name",
+      name: "name",
+      isRequired: true,
+      type: "string",
+    },
+    {
+      label: "Price",
+      name: "price",
+      isRequired: true,
+      startContent: "£",
+      type: "number",
+    },
+  ]
 }

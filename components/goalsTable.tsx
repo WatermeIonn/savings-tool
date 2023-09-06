@@ -12,14 +12,11 @@ import {
 } from "@nextui-org/react";
 import { GoalDto } from "@/dtos/goal.dto";
 import { GoalApi } from "@/apis/goal.api";
-import AddGoalButton from "./addGoalButton";
-import { IconX } from "@tabler/icons-react";
+import { IconPlus, IconX } from "@tabler/icons-react";
+import FormModal from "./common/formModal";
+import { FormInputTypeEnum } from "@/enums/FormInputTypeEnum";
 
-interface GoalsTableProps {
-  heading?: string;
-}
-
-export default function GoalsTable({ heading }: GoalsTableProps) {
+export default function GoalsTable() {
   const [goals, setGoals] = useState<GoalDto[]>([]);
 
   useEffect(() => {
@@ -38,7 +35,32 @@ export default function GoalsTable({ heading }: GoalsTableProps) {
   };
 
   const renderBottomContent = (): ReactNode => (
-    <AddGoalButton onAdd={handleAddGoal} />
+    <FormModal
+      type={GoalDto}
+      onSubmit={handleAddGoal}
+      modalTitle={"Add New Goal"}
+      buttonContent={
+        <>
+          <IconPlus className="rounded-full border-1 border-white mr-2" />
+          Add New Goal
+        </>
+      }
+      formInputs={[
+        {
+          label: "Name",
+          name: "name",
+          isRequired: true,
+          type: FormInputTypeEnum.String,
+        },
+        {
+          label: "Price",
+          name: "price",
+          isRequired: true,
+          startContent: "£",
+          type: FormInputTypeEnum.Number,
+        },
+      ]}
+    />
   );
 
   const totalToSave = goals.reduce(
@@ -50,10 +72,11 @@ export default function GoalsTable({ heading }: GoalsTableProps) {
     0
   );
 
+  debugger;
+
   return (
     <Table
       className="w-full"
-      topContent={heading}
       bottomContent={renderBottomContent()}
     >
       <TableHeader>
@@ -62,7 +85,7 @@ export default function GoalsTable({ heading }: GoalsTableProps) {
         <TableColumn>Price to Total</TableColumn>
         <TableColumn>Currently Saved</TableColumn>
         <TableColumn width={300}>Progress</TableColumn>
-        <TableColumn width={10} />
+        <TableColumn width={10}>&nbsp;</TableColumn>
       </TableHeader>
       <TableBody>
         {goals.map((goal, index) => {
@@ -109,7 +132,7 @@ export default function GoalsTable({ heading }: GoalsTableProps) {
               }
             />
           </TableCell>
-          <TableCell />
+          <TableCell>&nbsp;</TableCell>
         </TableRow>
       </TableBody>
     </Table>
