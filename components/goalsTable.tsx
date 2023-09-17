@@ -131,7 +131,7 @@ export default function GoalsTable() {
             </TableCell>
             <TableCell>
               <YesNoModal
-                message={"Are you sure you wish to delete this goal?"}
+                message={`Are you sure you wish to delete this goal (${goal.name})?`}
                 noText={"No"}
                 yesText={"Yes"}
                 onYes={() => handleRemoveGoal(goal)}
