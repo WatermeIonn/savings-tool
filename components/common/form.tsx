@@ -84,6 +84,7 @@ export default function Form<T>({
       {inputs.map(
         ({ label, name, startContent, hasError, errorMessage }, key) => (
           <Input
+            autoFocus={key === 0}
             key={key}
             label={label}
             name={name}

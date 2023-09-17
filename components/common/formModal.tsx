@@ -1,6 +1,6 @@
 "use client";
 
-import React, { ReactNode, useState } from "react";
+import React from "react";
 import {
   Modal,
   ModalBody,
@@ -12,6 +12,7 @@ import { buttonClass } from "@/components/primitives";
 import Form from "./form";
 import { FormModalProps } from "@/props/FormModalProps";
 
+// TODO: this modal is very similar to yes no modal, can they be refactored to remove the duplication?
 export default function FormModal<T>({
   modalTitle,
   onSubmit,

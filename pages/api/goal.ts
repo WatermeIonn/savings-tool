@@ -16,6 +16,8 @@ export default async function handler(
         result = await prisma.goal.findMany();
         return res.status(200).json(result);
       case "POST":
+        // TODO: if goal has not been fully saved i.e. <100%, then this should automatically spread the saved amount over other goals.
+        // if goal has been fully saved, then the record should just be deleted, and an event written to the savings table for minus the amount.
         result = await prisma.goal.create({ data: req.body });
         return res.status(200).json(result);
       case "DELETE":
