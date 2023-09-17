@@ -12,13 +12,15 @@ import { buttonClass } from "@/components/primitives";
 import Form from "./form";
 import { FormModalProps } from "@/props/FormModalProps";
 
-// TODO: this modal is very similar to yes no modal, can they be refactored to remove the duplication?
 export default function FormModal<T>({
   modalTitle,
   onSubmit,
+  onChange,
   submitText,
   formInputs,
   buttonContent,
+  size,
+  renderBottomContent,
 }: FormModalProps<T>) {
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
 
@@ -27,7 +29,12 @@ export default function FormModal<T>({
       <span onClick={onOpen} className={buttonClass.primary}>
         {buttonContent}
       </span>
-      <Modal isOpen={isOpen} onOpenChange={onOpenChange} isDismissable={false}>
+      <Modal
+        size={size ?? "lg"}
+        isOpen={isOpen}
+        onOpenChange={onOpenChange}
+        isDismissable={false}
+      >
         <ModalContent>
           {(onClose) => (
             <>
@@ -37,10 +44,12 @@ export default function FormModal<T>({
               <ModalBody>
                 <Form
                   onSubmit={onSubmit}
+                  onChange={onChange}
                   onClose={onClose}
                   submitText={submitText}
                   formInputs={formInputs}
                 />
+                {renderBottomContent && renderBottomContent()}
               </ModalBody>
             </>
           )}

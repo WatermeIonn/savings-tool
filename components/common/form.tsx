@@ -3,19 +3,20 @@
 import React, { ChangeEvent, SyntheticEvent, useState } from "react";
 import { Button, Input } from "@nextui-org/react";
 import { buttonClass } from "@/components/primitives";
-import { FormInputInterface } from "@/interfaces/FormInputInterface";
 import { inputsToDto } from "@/utils/dto.util";
 import { FormProps } from "@/props/FormProps";
+import { BaseInput } from "@/classes/BaseInput";
 
 export default function Form<T>({
   onSubmit,
+  onChange,
   onClose,
   submitText,
   formInputs,
 }: FormProps<T> & { onClose?: (e: SyntheticEvent) => void }) {
-  const [inputs, setInputs] = useState<FormInputInterface[]>(formInputs);
+  const [inputs, setInputs] = useState<BaseInput[]>(formInputs);
 
-  const updateInput = (inputToUpdate: FormInputInterface): void => {
+  const updateInput = (inputToUpdate: BaseInput): void => {
     const inputsCopy = inputs.map((input) => {
       if (input.name === inputToUpdate.name) {
         return inputToUpdate;
@@ -26,21 +27,8 @@ export default function Form<T>({
     setInputs(inputsCopy);
   };
 
-  const validateInput = (input: FormInputInterface): boolean => {
-    let success = true;
-
-    if (input.isRequired && !input.value) {
-      input.hasError = true;
-      input.errorMessage = "This field is mandatory.";
-      success = false;
-    } else if (input.type === "number" && isNaN(Number(input.value))) {
-      input.hasError = true;
-      input.errorMessage = "Value must be a number.";
-      success = false;
-    } else {
-      input.hasError = false;
-    }
-
+  const validateInput = (input: BaseInput): boolean => {
+    const success = input.validate();
     updateInput(input);
     return success;
   };
@@ -55,6 +43,9 @@ export default function Form<T>({
 
     inputToUpdate.value = value;
     updateInput(inputToUpdate);
+    if (onChange) {
+      onChange(inputsToDto(inputs));
+    }
   };
 
   const handleSubmit = (e: SyntheticEvent) => {
@@ -82,22 +73,38 @@ export default function Form<T>({
   return (
     <form onSubmit={handleSubmit}>
       {inputs.map(
-        ({ label, name, startContent, hasError, errorMessage }, key) => (
-          <Input
-            autoFocus={key === 0}
-            key={key}
-            label={label}
-            name={name}
-            className="mb-5 w-full"
-            onChange={handleChange}
-            startContent={startContent}
-            isInvalid={hasError}
-            errorMessage={errorMessage}
-          />
-        )
+        (
+          {
+            label,
+            name,
+            startContent,
+            endContent,
+            hasError,
+            errorMessage,
+            customInput,
+            isRequired,
+            description,
+          },
+          key
+        ) =>
+          customInput || (
+            <Input
+              autoFocus={key === 0}
+              key={key}
+              label={isRequired ? `${label} (*)` : label}
+              name={name}
+              className="mb-5 w-full"
+              onChange={handleChange}
+              startContent={startContent}
+              endContent={endContent}
+              isInvalid={hasError}
+              errorMessage={errorMessage}
+              description={description}
+            />
+          )
       )}
-      <div className="text-right">
-        <Button className={buttonClass.primary} type="submit">
+      <div>
+        <Button className={`${buttonClass.primary} float-right`} type="submit">
           {submitText ?? "Submit"}
         </Button>
       </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { ReactNode, useEffect, useState } from "react";
+import React from "react";
 import {
   Table,
   TableHeader,
@@ -11,37 +11,15 @@ import {
   Progress,
   Spinner,
 } from "@nextui-org/react";
-import { IconPlus, IconX } from "@tabler/icons-react";
-import FormModal from "./common/formModal";
-import { FormInputTypeEnum } from "@/enums/FormInputTypeEnum";
-import axios from "axios";
-import { Goal } from "@prisma/client";
-import YesNoModal from "./common/yesNoModal";
+import { GoalsTableProps } from "@/props/GoalsTableProps";
 
-export default function GoalsTable() {
-  const [isLoading, setIsLoading] = useState(false);
-  const [goals, setGoals] = useState<Goal[]>([]);
-
-  useEffect(() => {
-    setIsLoading(true);
-    axios.get("http://localhost:3000/api/goal").then((res) => {
-      setGoals(res.data);
-      setIsLoading(false);
-    });
-  }, []);
-
-  const handleAddGoal = (goal: Goal): void => {
-    axios.post("http://localhost:3000/api/goal", goal).then((res) => {
-      setGoals([...goals, res.data]);
-    });
-  };
-
-  const handleRemoveGoal = (goal: Goal): void => {
-    axios.delete(`http://localhost:3000/api/goal?id=${goal.id}`).then(() => {
-      setGoals(goals.filter((currentGoal) => currentGoal.id !== goal.id));
-    });
-  };
-
+export default function GoalsTable({
+  renderBottomContent,
+  renderRowOptionContent,
+  isLoading,
+  goals,
+  showTotalRow
+}: GoalsTableProps) {
   const totalToSave = goals.reduce(
     (runningTotal, { price }) => runningTotal + price,
     0
@@ -50,34 +28,6 @@ export default function GoalsTable() {
   const totalSaved = goals.reduce(
     (runningTotal, { saved }) => runningTotal + saved,
     0
-  );
-
-  const renderBottomContent = (): ReactNode => (
-    <FormModal<Goal>
-      onSubmit={handleAddGoal}
-      modalTitle={"Add New Goal"}
-      buttonContent={
-        <>
-          <IconPlus className="rounded-full border-1 border-white mr-2" />
-          Add New Goal
-        </>
-      }
-      formInputs={[
-        {
-          label: "Name",
-          name: "name",
-          isRequired: true,
-          type: FormInputTypeEnum.String,
-        },
-        {
-          label: "Price",
-          name: "price",
-          isRequired: true,
-          startContent: "£",
-          type: FormInputTypeEnum.Number,
-        },
-      ]}
-    />
   );
 
   const renderTotalRow = (): any => (
@@ -103,7 +53,10 @@ export default function GoalsTable() {
   return isLoading ? (
     <Spinner color="secondary" />
   ) : (
-    <Table className="w-full" bottomContent={renderBottomContent()}>
+    <Table
+      className="w-full"
+      bottomContent={renderBottomContent && renderBottomContent()}
+    >
       <TableHeader>
         <TableColumn>Name</TableColumn>
         <TableColumn>Price</TableColumn>
@@ -120,7 +73,7 @@ export default function GoalsTable() {
             <TableCell>
               {((goal.price / totalToSave) * 100).toFixed(1)}%
             </TableCell>
-            <TableCell>£{goal.saved}</TableCell>
+            <TableCell>£{goal.saved.toFixed(2)}</TableCell>
             <TableCell>
               <Progress
                 isStriped
@@ -130,17 +83,11 @@ export default function GoalsTable() {
               />
             </TableCell>
             <TableCell>
-              <YesNoModal
-                message={`Are you sure you wish to delete this goal (${goal.name})?`}
-                noText={"No"}
-                yesText={"Yes"}
-                onYes={() => handleRemoveGoal(goal)}
-                buttonContent={<IconX />}
-              />
+              {renderRowOptionContent && renderRowOptionContent(goal)}
             </TableCell>
           </TableRow>
         ))}
-        {renderTotalRow()}
+        {showTotalRow && renderTotalRow()}
       </TableBody>
     </Table>
   );

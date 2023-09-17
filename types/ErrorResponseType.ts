@@ -1,4 +1,4 @@
-export interface ErrorResponseInterface {
+export type ErrorResponseType = {
   message: string;
   exception?: unknown;
 }

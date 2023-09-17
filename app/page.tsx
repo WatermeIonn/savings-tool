@@ -1,4 +1,4 @@
-import GoalsTable from "@/components/goalsTable";
+import GoalsTable from "@/components/goalsContainer";
 
 export default function Home() {
   return (
