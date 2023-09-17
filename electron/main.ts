@@ -14,6 +14,8 @@ function createWindow() {
     },
   })
 
+  require('better-sqlite3');
+
   if (app.isPackaged) {
     // 'build/index.html'
     win.loadURL(`file://${__dirname}/../index.html`);

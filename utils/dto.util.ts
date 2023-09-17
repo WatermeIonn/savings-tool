@@ -7,7 +7,6 @@ export function inputsToDto<T>(
 ): T {
   const dto: any = new type();
 
-  debugger;
   for (const input of inputs) {
     switch (input.type) {
       case FormInputTypeEnum.Number:

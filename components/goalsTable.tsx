@@ -10,33 +10,50 @@ import {
   TableCell,
   Progress,
 } from "@nextui-org/react";
-import { GoalDto } from "@/dtos/goal.dto";
-import { GoalApi } from "@/apis/goal.api";
 import { IconPlus, IconX } from "@tabler/icons-react";
 import FormModal from "./common/formModal";
 import { FormInputTypeEnum } from "@/enums/FormInputTypeEnum";
+import axios from "axios";
+import { plainToClass } from "class-transformer";
+import { Goal } from "@/models/goal.model";
 
 export default function GoalsTable() {
-  const [goals, setGoals] = useState<GoalDto[]>([]);
+  const [goals, setGoals] = useState<Goal[]>([]);
 
   useEffect(() => {
-    GoalApi.getAll().then((goals) => setGoals(goals));
+    axios.get("http://localhost:3000/api/goal").then((res) => {
+      const goals: Goal[] = res.data.map((json: any) =>
+        plainToClass(Goal, json)
+      );
+      setGoals(goals);
+    });
   }, []);
 
-  const handleAddGoal = (goal: GoalDto): void => {
-    GoalApi.post(goal).then((result) => setGoals([...goals, result]));
+  const handleAddGoal = (goal: Goal): void => {
+    axios.post("http://localhost:3000/api/goal", goal).then((res) => {
+      setGoals([...goals, plainToClass(Goal, res.data)]);
+    });
   };
 
   // TODO: add confirmation
-  const handleRemoveGoal = (goal: GoalDto): void => {
-    GoalApi.delete(goal).then((result) =>
-      setGoals(goals.filter((goal) => goal.id !== result.id))
-    );
+  const handleRemoveGoal = (goal: Goal): void => {
+    axios.delete(`http://localhost:3000/api/goal?id=${goal.id}`).then(() => {
+      setGoals(goals.filter((currentGoal) => currentGoal.id !== goal.id));
+    });
   };
+
+  const totalToSave = goals.reduce(
+    (runningTotal, { price }) => runningTotal + price,
+    0
+  );
+  const totalSaved = goals.reduce(
+    (runningTotal, { saved }) => runningTotal + saved,
+    0
+  );
 
   const renderBottomContent = (): ReactNode => (
     <FormModal
-      type={GoalDto}
+      type={Goal}
       onSubmit={handleAddGoal}
       modalTitle={"Add New Goal"}
       buttonContent={
@@ -63,22 +80,35 @@ export default function GoalsTable() {
     />
   );
 
-  const totalToSave = goals.reduce(
-    (runningTotal, { price }) => runningTotal + price,
-    0
-  );
-  const totalSaved = goals.reduce(
-    (runningTotal, { saved }) => runningTotal + saved,
-    0
-  );
-
-  debugger;
+  const renderTotalRow = (existingRow: ReactNode): any => {
+    return (
+      <>
+        {existingRow}
+        <TableRow key="9999" className="bg-default-100">
+          <TableCell className="font-bold">Total to Save:</TableCell>
+          <TableCell className="font-bold">£{totalToSave}</TableCell>
+          <TableCell className="font-bold">Total Saved:</TableCell>
+          <TableCell className="font-bold">£{totalSaved}</TableCell>
+          <TableCell>
+            <Progress
+              isStriped
+              showValueLabel
+              color="secondary"
+              value={
+                totalSaved && totalToSave
+                  ? (totalSaved / totalToSave) * 100
+                  : 100
+              }
+            />
+          </TableCell>
+          <TableCell>&nbsp;</TableCell>
+        </TableRow>
+      </>
+    );
+  };
 
   return (
-    <Table
-      className="w-full"
-      bottomContent={renderBottomContent()}
-    >
+    <Table className="w-full" bottomContent={renderBottomContent()}>
       <TableHeader>
         <TableColumn>Name</TableColumn>
         <TableColumn>Price</TableColumn>
@@ -90,7 +120,8 @@ export default function GoalsTable() {
       <TableBody>
         {goals.map((goal, index) => {
           const { name, price, saved } = goal;
-          return (
+
+          let row = (
             <TableRow key={index}>
               <TableCell>{name}</TableCell>
               <TableCell>£{price}</TableCell>
@@ -114,26 +145,13 @@ export default function GoalsTable() {
               </TableCell>
             </TableRow>
           );
+
+          if (index === goals.length - 1) {
+            return renderTotalRow(row);
+          }
+
+          return row;
         })}
-        <TableRow key="9999" className="bg-default-100">
-          <TableCell className="font-bold">Total to Save:</TableCell>
-          <TableCell className="font-bold">£{totalToSave}</TableCell>
-          <TableCell className="font-bold">Total Saved:</TableCell>
-          <TableCell className="font-bold">£{totalSaved}</TableCell>
-          <TableCell>
-            <Progress
-              isStriped
-              showValueLabel
-              color="secondary"
-              value={
-                totalSaved && totalToSave
-                  ? (totalSaved / totalToSave) * 100
-                  : 100
-              }
-            />
-          </TableCell>
-          <TableCell>&nbsp;</TableCell>
-        </TableRow>
       </TableBody>
     </Table>
   );

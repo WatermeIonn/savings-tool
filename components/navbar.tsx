@@ -1,7 +1,6 @@
 import {
 	Navbar as NextUINavbar,
 	NavbarContent,
-	NavbarBrand,
 	NavbarItem,
 } from "@nextui-org/navbar";
 import { link as linkStyles } from "@nextui-org/theme";

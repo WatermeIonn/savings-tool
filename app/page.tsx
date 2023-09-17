@@ -1,4 +1,3 @@
-import { Snippet } from "@nextui-org/snippet";
 import GoalsTable from "@/components/goalsTable";
 
 export default function Home() {

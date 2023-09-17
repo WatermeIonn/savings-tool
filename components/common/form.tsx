@@ -1,8 +1,8 @@
 "use client";
 
-import React, { ChangeEvent, ReactNode, SyntheticEvent, useState } from "react";
+import React, { ChangeEvent, SyntheticEvent, useState } from "react";
 import { Button, Input } from "@nextui-org/react";
-import { buttonClass } from "../primitives";
+import { buttonClass } from "@/components/primitives";
 import { FormInputInterface } from "@/interfaces/FormInputInterface";
 import { inputsToDto } from "@/utils/dto.util";
 import { FormProps } from "@/props/FormProps";

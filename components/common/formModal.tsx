@@ -1,8 +1,6 @@
 "use client";
 
 import React, { ReactNode, useState } from "react";
-import { IconPlus } from "@tabler/icons-react";
-import { GoalDto } from "@/dtos/goal.dto";
 import {
   Modal,
   ModalBody,
@@ -10,7 +8,7 @@ import {
   ModalHeader,
   useDisclosure,
 } from "@nextui-org/react";
-import { buttonClass } from "../primitives";
+import { buttonClass } from "@/components/primitives";
 import Form from "./form";
 import { FormModalProps } from "@/props/FormModalProps";
 
