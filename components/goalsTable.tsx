@@ -9,33 +9,33 @@ import {
   TableRow,
   TableCell,
   Progress,
+  Spinner,
 } from "@nextui-org/react";
 import { IconPlus, IconX } from "@tabler/icons-react";
 import FormModal from "./common/formModal";
 import { FormInputTypeEnum } from "@/enums/FormInputTypeEnum";
 import axios from "axios";
-import { plainToClass } from "class-transformer";
-import { Goal } from "@/models/goal.model";
+import { Goal } from "@prisma/client";
+import YesNoModal from "./common/yesNoModal";
 
 export default function GoalsTable() {
+  const [isLoading, setIsLoading] = useState(false);
   const [goals, setGoals] = useState<Goal[]>([]);
 
   useEffect(() => {
+    setIsLoading(true);
     axios.get("http://localhost:3000/api/goal").then((res) => {
-      const goals: Goal[] = res.data.map((json: any) =>
-        plainToClass(Goal, json)
-      );
-      setGoals(goals);
+      setGoals(res.data);
+      setIsLoading(false);
     });
   }, []);
 
   const handleAddGoal = (goal: Goal): void => {
     axios.post("http://localhost:3000/api/goal", goal).then((res) => {
-      setGoals([...goals, plainToClass(Goal, res.data)]);
+      setGoals([...goals, res.data]);
     });
   };
 
-  // TODO: add confirmation
   const handleRemoveGoal = (goal: Goal): void => {
     axios.delete(`http://localhost:3000/api/goal?id=${goal.id}`).then(() => {
       setGoals(goals.filter((currentGoal) => currentGoal.id !== goal.id));
@@ -46,14 +46,14 @@ export default function GoalsTable() {
     (runningTotal, { price }) => runningTotal + price,
     0
   );
+
   const totalSaved = goals.reduce(
     (runningTotal, { saved }) => runningTotal + saved,
     0
   );
 
   const renderBottomContent = (): ReactNode => (
-    <FormModal
-      type={Goal}
+    <FormModal<Goal>
       onSubmit={handleAddGoal}
       modalTitle={"Add New Goal"}
       buttonContent={
@@ -80,34 +80,29 @@ export default function GoalsTable() {
     />
   );
 
-  const renderTotalRow = (existingRow: ReactNode): any => {
-    return (
-      <>
-        {existingRow}
-        <TableRow key="9999" className="bg-default-100">
-          <TableCell className="font-bold">Total to Save:</TableCell>
-          <TableCell className="font-bold">£{totalToSave}</TableCell>
-          <TableCell className="font-bold">Total Saved:</TableCell>
-          <TableCell className="font-bold">£{totalSaved}</TableCell>
-          <TableCell>
-            <Progress
-              isStriped
-              showValueLabel
-              color="secondary"
-              value={
-                totalSaved && totalToSave
-                  ? (totalSaved / totalToSave) * 100
-                  : 100
-              }
-            />
-          </TableCell>
-          <TableCell>&nbsp;</TableCell>
-        </TableRow>
-      </>
-    );
-  };
+  const renderTotalRow = (): any => (
+    <TableRow key="9999" className="bg-default-100">
+      <TableCell className="font-bold">Total to Save:</TableCell>
+      <TableCell className="font-bold">£{totalToSave}</TableCell>
+      <TableCell className="font-bold">Total Saved:</TableCell>
+      <TableCell className="font-bold">£{totalSaved}</TableCell>
+      <TableCell>
+        <Progress
+          isStriped
+          showValueLabel
+          color="secondary"
+          value={
+            totalSaved && totalToSave ? (totalSaved / totalToSave) * 100 : 0
+          }
+        />
+      </TableCell>
+      <TableCell>&nbsp;</TableCell>
+    </TableRow>
+  );
 
-  return (
+  return isLoading ? (
+    <Spinner color="secondary" />
+  ) : (
     <Table className="w-full" bottomContent={renderBottomContent()}>
       <TableHeader>
         <TableColumn>Name</TableColumn>
@@ -118,40 +113,34 @@ export default function GoalsTable() {
         <TableColumn width={10}>&nbsp;</TableColumn>
       </TableHeader>
       <TableBody>
-        {goals.map((goal, index) => {
-          const { name, price, saved } = goal;
-
-          let row = (
-            <TableRow key={index}>
-              <TableCell>{name}</TableCell>
-              <TableCell>£{price}</TableCell>
-              <TableCell>{goal.getPriceToTotal(totalToSave)}%</TableCell>
-              <TableCell>£{saved}</TableCell>
-              <TableCell>
-                <Progress
-                  isStriped
-                  showValueLabel
-                  color="secondary"
-                  value={(saved / price) * 100}
-                />
-              </TableCell>
-              <TableCell>
-                <span
-                  className="cursor-pointer"
-                  onClick={() => handleRemoveGoal(goal)}
-                >
-                  <IconX />
-                </span>
-              </TableCell>
-            </TableRow>
-          );
-
-          if (index === goals.length - 1) {
-            return renderTotalRow(row);
-          }
-
-          return row;
-        })}
+        {goals.map((goal, index) => (
+          <TableRow key={index}>
+            <TableCell>{goal.name}</TableCell>
+            <TableCell>£{goal.price}</TableCell>
+            <TableCell>
+              {((goal.price / totalToSave) * 100).toFixed(1)}%
+            </TableCell>
+            <TableCell>£{goal.saved}</TableCell>
+            <TableCell>
+              <Progress
+                isStriped
+                showValueLabel
+                color="secondary"
+                value={(goal.saved / goal.price) * 100}
+              />
+            </TableCell>
+            <TableCell>
+              <YesNoModal
+                message={"Are you sure you wish to delete this goal?"}
+                noText={"No"}
+                yesText={"Yes"}
+                onYes={() => handleRemoveGoal(goal)}
+                buttonContent={<IconX />}
+              />
+            </TableCell>
+          </TableRow>
+        ))}
+        {renderTotalRow()}
       </TableBody>
     </Table>
   );

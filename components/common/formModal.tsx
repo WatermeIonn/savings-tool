@@ -15,7 +15,6 @@ import { FormModalProps } from "@/props/FormModalProps";
 export default function FormModal<T>({
   modalTitle,
   onSubmit,
-  type,
   submitText,
   formInputs,
   buttonContent,
@@ -36,7 +35,6 @@ export default function FormModal<T>({
               </ModalHeader>
               <ModalBody>
                 <Form
-                  type={type}
                   onSubmit={onSubmit}
                   onClose={onClose}
                   submitText={submitText}

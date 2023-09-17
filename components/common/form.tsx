@@ -11,7 +11,6 @@ export default function Form<T>({
   onSubmit,
   onClose,
   submitText,
-  type,
   formInputs,
 }: FormProps<T> & { onClose?: (e: SyntheticEvent) => void }) {
   const [inputs, setInputs] = useState<FormInputInterface[]>(formInputs);
@@ -77,7 +76,7 @@ export default function Form<T>({
       onClose(e);
     }
 
-    onSubmit(inputsToDto(inputs, type));
+    onSubmit(inputsToDto(inputs));
   };
 
   return (
@@ -91,7 +90,7 @@ export default function Form<T>({
             className="mb-5 w-full"
             onChange={handleChange}
             startContent={startContent}
-            validationState={hasError ? "invalid" : "valid"}
+            isInvalid={hasError}
             errorMessage={errorMessage}
           />
         )

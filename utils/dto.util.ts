@@ -1,11 +1,8 @@
 import { FormInputTypeEnum } from "@/enums/FormInputTypeEnum";
 import { FormInputInterface } from "@/interfaces/FormInputInterface";
 
-export function inputsToDto<T>(
-  inputs: FormInputInterface[],
-  type: new () => T
-): T {
-  const dto: any = new type();
+export function inputsToDto<T>(inputs: FormInputInterface[]): T {
+  let dto: any = {};
 
   for (const input of inputs) {
     switch (input.type) {
@@ -18,5 +15,5 @@ export function inputsToDto<T>(
     }
   }
 
-  return dto;
+  return dto as T;
 }
