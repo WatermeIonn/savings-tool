@@ -1,4 +1,4 @@
-export type ErrorResponseType = {
+export type ErrorResponse = {
   message: string;
   exception?: unknown;
 }

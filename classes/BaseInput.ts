@@ -1,3 +1,4 @@
+import { ValidationRules } from "@/types/ValidationRules.type";
 import { ReactNode } from "react";
 
 export class BaseInput {
@@ -39,16 +40,16 @@ export class BaseInput {
     Object.assign(this, data);
   }
 
-  public validate(): boolean {
-    let success = true;
+  public validationRules?: ValidationRules;
 
+  public validate(): boolean {
     if (this.isRequired && !this.value) {
       this.hasError = true;
       this.errorMessage = "This field is mandatory.";
-      success = false;
+      return false;
     }
 
-    return success;
+    return true;
   }
 
   public getValue(): any {

@@ -12,37 +12,44 @@ import {
   Spinner,
 } from "@nextui-org/react";
 import { GoalsTableProps } from "@/props/GoalsTableProps";
+import { Decimal } from "decimal.js";
 
 export default function GoalsTable({
   renderBottomContent,
   renderRowOptionContent,
   isLoading,
   goals,
-  showTotalRow
+  showTotalRow,
 }: GoalsTableProps) {
   const totalToSave = goals.reduce(
-    (runningTotal, { price }) => runningTotal + price,
-    0
+    (runningTotal, { price }) => runningTotal.add(price),
+    new Decimal(0)
   );
 
   const totalSaved = goals.reduce(
-    (runningTotal, { saved }) => runningTotal + saved,
-    0
+    (runningTotal, { saved }) => runningTotal.add(saved),
+    new Decimal(0)
   );
 
   const renderTotalRow = (): any => (
     <TableRow key="9999" className="bg-default-100">
       <TableCell className="font-bold">Total to Save:</TableCell>
-      <TableCell className="font-bold">£{totalToSave}</TableCell>
+      <TableCell className="font-bold">
+        £{totalToSave.toString()}
+      </TableCell>
       <TableCell className="font-bold">Total Saved:</TableCell>
-      <TableCell className="font-bold">£{totalSaved}</TableCell>
+      <TableCell className="font-bold">
+        £{totalSaved.toString()}
+      </TableCell>
       <TableCell>
         <Progress
           isStriped
           showValueLabel
           color="secondary"
           value={
-            totalSaved && totalToSave ? (totalSaved / totalToSave) * 100 : 0
+            !totalSaved.isZero() && !totalToSave.isZero()
+              ? totalSaved.dividedBy(totalToSave).times(100).toNumber()
+              : 0
           }
         />
       </TableCell>
@@ -51,7 +58,7 @@ export default function GoalsTable({
   );
 
   return isLoading ? (
-    <Spinner color="secondary" />
+    <Spinner className="mt-10" color="secondary" />
   ) : (
     <Table
       className="w-full"
@@ -69,9 +76,9 @@ export default function GoalsTable({
         {goals.map((goal, index) => (
           <TableRow key={index}>
             <TableCell>{goal.name}</TableCell>
-            <TableCell>£{goal.price}</TableCell>
+            <TableCell>£{goal.price.toString()}</TableCell>
             <TableCell>
-              {((goal.price / totalToSave) * 100).toFixed(1)}%
+              {goal.price.dividedBy(totalToSave).times(100).toDP(1).toString()}%
             </TableCell>
             <TableCell>£{goal.saved.toFixed(2)}</TableCell>
             <TableCell>
@@ -79,7 +86,7 @@ export default function GoalsTable({
                 isStriped
                 showValueLabel
                 color="secondary"
-                value={(goal.saved / goal.price) * 100}
+                value={goal.saved.dividedBy(goal.price).times(100).toNumber()}
               />
             </TableCell>
             <TableCell>

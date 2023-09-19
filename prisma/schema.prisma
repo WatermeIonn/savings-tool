@@ -11,16 +11,15 @@ datasource db {
 }
 
 model Goal {
-  id     String  @id @default(uuid())
-  name   String
-  price  Int
-  saved  Int     @default(0)
-  saving Saving?
+  id    String  @id @default(uuid())
+  name  String
+  price Decimal
+  saved Decimal @default(0)
 }
 
 model Saving {
-  id     String  @id @default(uuid())
-  amount Int
-  goal   Goal?   @relation(fields: [goalId], references: [id])
-  goalId String? @unique
+  id     String   @id @default(uuid())
+  amount Decimal
+  date   DateTime @default(now())
+  event  String?
 }

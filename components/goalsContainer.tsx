@@ -10,6 +10,7 @@ import GoalsTable from "./goalsTable";
 import { BaseInput } from "@/classes/BaseInput";
 import { NumberInput } from "@/classes/NumberInput";
 import { PercentageInput } from "@/classes/PercentageInput";
+import Decimal from "decimal.js";
 
 export default function GoalsContainer() {
   const [isLoading, setIsLoading] = useState(false);
@@ -19,10 +20,11 @@ export default function GoalsContainer() {
   useEffect(() => {
     setIsLoading(true);
     axios.get("http://localhost:3000/api/goal").then((res) => {
-      setGoals(res.data);
+      const goals = res.data.map((goal: any) => jsonToGoal(goal));
+      setGoals(goals);
 
       if (!goalsPreview.length) {
-        setGoalsPreview(res.data);
+        setGoalsPreview(goals);
       }
 
       setIsLoading(false);
@@ -32,23 +34,29 @@ export default function GoalsContainer() {
   const handleAddGoal = (goal: Goal): void => {
     axios
       .post("http://localhost:3000/api/goal", goal)
-      .then((res) => setGoals([...goals, res.data]));
+      .then((res) => setGoals([...goals, jsonToGoal(res.data)]));
   };
 
   const handleAddSaving = (saving: Saving, simulate?: boolean): void => {
     axios
       .post(
-        `http://localhost:3000/api/savings${simulate && "?simulate=true"}`,
+        `http://localhost:3000/api/savings${simulate ? "?simulate=true" : ""}`,
         saving
       )
       .then((res) => {
-        setGoalsPreview(res.data);
+        const goals = res.data.map((goal: any) => jsonToGoal(goal));
+        setGoalsPreview(goals);
+        if (!simulate) {
+          setGoals(goals);
+        }
       });
   };
 
   const handleRemoveGoal = (goal: Goal): void => {
-    axios.delete(`http://localhost:3000/api/goal?id=${goal.id}`).then(() => {
-      setGoals(goals.filter((currentGoal) => currentGoal.id !== goal.id));
+    axios.delete(`http://localhost:3000/api/goal?id=${goal.id}`).then((res) => {
+      const goals: Goal[] = res.data.map((goal: any) => jsonToGoal(goal));
+      setGoalsPreview(goals);
+      setGoals(goals);
     });
   };
 
@@ -130,3 +138,12 @@ export default function GoalsContainer() {
     />
   );
 }
+
+const jsonToGoal = (goal: any): Goal => {
+  return {
+    id: goal.id,
+    name: goal.name,
+    price: new Decimal(goal.price),
+    saved: new Decimal(goal.saved),
+  };
+};

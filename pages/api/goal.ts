@@ -1,12 +1,14 @@
-import { ErrorResponseType } from "@/types/ErrorResponseType";
+import { ErrorResponse } from "@/types/ErrorResponse.type";
 import { Goal, PrismaClient } from "@prisma/client";
 import { NextApiRequest, NextApiResponse } from "next";
+import { addSavings } from "./savings";
+import Decimal from "decimal.js";
 
 const prisma = new PrismaClient();
 
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse<Goal | Goal[] | ErrorResponseType>
+  res: NextApiResponse<Goal | Goal[] | ErrorResponse>
 ) {
   let result: Goal | Goal[];
 
@@ -44,11 +46,27 @@ export const getGoals = async (): Promise<Goal[]> => {
 };
 
 const createGoal = async (data: any): Promise<Goal> => {
-  // TODO: if goal has not been fully saved i.e. <100%, then this should automatically spread the saved amount over other goals.
-  // if goal has been fully saved, then the record should just be deleted, and an event written to the savings table for minus the amount.
-  return await prisma.goal.create({ data });
+  return await prisma.goal.create({
+    data: {
+      id: data.id,
+      name: data.name,
+      price: new Decimal(data.price).toDP(2),
+      saved: data.saved ? new Decimal(data.saved).toDP(2) : undefined,
+    },
+  });
 };
 
-const deleteGoal = async (id: string): Promise<Goal> => {
-  return await prisma.goal.delete({ where: { id } });
+const deleteGoal = async (id: string): Promise<Goal[]> => {
+  const goal = await prisma.goal.delete({ where: { id } });
+
+  if (!goal.saved.equals(goal.price)) {
+    await addSavings(
+      goal.saved,
+      undefined,
+      undefined,
+      `Removed goal ${goal.name}`
+    );
+  }
+
+  return await getGoals();
 };
