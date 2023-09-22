@@ -1,18 +1,14 @@
-import { FormInputTypeEnum } from "@/enums/FormInputTypeEnum";
-import { FormInputInterface } from "@/interfaces/FormInputInterface";
+import { BaseInput } from "@/classes/BaseInput";
 
-export function inputsToDto<T>(inputs: FormInputInterface[]): T {
+export function inputsToDto<T>(inputs: BaseInput[]): T {
   let dto: any = {};
 
   for (const input of inputs) {
-    switch (input.type) {
-      case FormInputTypeEnum.Number:
-        dto[input.name] = Number(input.value);
-        break;
-      case FormInputTypeEnum.String:
-      default:
-        dto[input.name] = input.value;
+    if (input.isComputed) {
+      continue;
     }
+
+    dto[input.name] = input.getValue();
   }
 
   return dto as T;

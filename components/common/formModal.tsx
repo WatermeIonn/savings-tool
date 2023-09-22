@@ -1,6 +1,6 @@
 "use client";
 
-import React, { ReactNode, useState } from "react";
+import React from "react";
 import {
   Modal,
   ModalBody,
@@ -15,9 +15,12 @@ import { FormModalProps } from "@/props/FormModalProps";
 export default function FormModal<T>({
   modalTitle,
   onSubmit,
+  onChange,
   submitText,
   formInputs,
   buttonContent,
+  size,
+  renderBottomContent,
 }: FormModalProps<T>) {
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
 
@@ -26,7 +29,12 @@ export default function FormModal<T>({
       <span onClick={onOpen} className={buttonClass.primary}>
         {buttonContent}
       </span>
-      <Modal isOpen={isOpen} onOpenChange={onOpenChange} isDismissable={false}>
+      <Modal
+        size={size ?? "lg"}
+        isOpen={isOpen}
+        onOpenChange={onOpenChange}
+        isDismissable={false}
+      >
         <ModalContent>
           {(onClose) => (
             <>
@@ -36,10 +44,12 @@ export default function FormModal<T>({
               <ModalBody>
                 <Form
                   onSubmit={onSubmit}
+                  onChange={onChange}
                   onClose={onClose}
                   submitText={submitText}
                   formInputs={formInputs}
                 />
+                {renderBottomContent && renderBottomContent()}
               </ModalBody>
             </>
           )}
