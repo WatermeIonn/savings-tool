@@ -3,11 +3,17 @@
   "author": "Daniel Cooper <daniellukecooper@outlook.com>",
   "version": "0.0.1",
   "private": true,
-  "main": "build/electron/main.js",
+  "main": "./build/electron/main.js",
   "browser": {
     "fs": false,
     "path": false,
     "os": false
+  },
+  "build": {
+    "files": [
+      "dist/**/*",
+      "package.json"
+    ]
   },
   "scripts": {
     "start": "next start",
@@ -54,7 +60,6 @@
     "web-vitals": "^3.1.1"
   },
   "devDependencies": {
-    "@electron/rebuild": "^3.3.0",
     "@types/electron-devtools-installer": "^2.2.2",
     "@types/node": "20.5.7",
     "@types/react": "18.2.21",

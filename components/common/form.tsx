@@ -8,6 +8,7 @@ import { FormProps } from "@/props/FormProps";
 import { BaseInput } from "@/classes/BaseInput";
 
 export default function Form<T>({
+  id,
   onSubmit,
   onChange,
   onClose,
@@ -67,7 +68,7 @@ export default function Form<T>({
       onClose(e);
     }
 
-    onSubmit(inputsToDto(inputs));
+    onSubmit(inputsToDto(inputs, id));
   };
 
   return (
@@ -84,6 +85,7 @@ export default function Form<T>({
             customInput,
             isRequired,
             description,
+            value
           },
           key
         ) =>
@@ -100,6 +102,7 @@ export default function Form<T>({
               isInvalid={hasError}
               errorMessage={errorMessage}
               description={description}
+              defaultValue={value}
             />
           )
       )}

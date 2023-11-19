@@ -39,7 +39,7 @@ export default function GoalsTable({
       </TableCell>
       <TableCell className="font-bold">Total Saved:</TableCell>
       <TableCell className="font-bold">
-        £{totalSaved.toString()}
+        £{totalSaved.toFixed(2)}
       </TableCell>
       <TableCell>
         <Progress
@@ -70,7 +70,7 @@ export default function GoalsTable({
         <TableColumn>Price to Total</TableColumn>
         <TableColumn>Currently Saved</TableColumn>
         <TableColumn width={300}>Progress</TableColumn>
-        <TableColumn width={10}>&nbsp;</TableColumn>
+        <TableColumn width={72}>&nbsp;</TableColumn>
       </TableHeader>
       <TableBody>
         {goals.map((goal, index) => (

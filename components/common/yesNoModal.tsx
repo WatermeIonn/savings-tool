@@ -20,7 +20,7 @@ export default function YesNoModal({
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
 
   return (
-    <div className="flex justify-center">
+    <>
       <span onClick={onOpen} className="cursor-pointer">
         {buttonContent}
       </span>
@@ -31,7 +31,10 @@ export default function YesNoModal({
               <ModalHeader>{message}</ModalHeader>
               <ModalBody>
                 <div className="flex-row">
-                  <span onClick={onClose} className={`${buttonClass.primary} w-24 flex-col`}>
+                  <span
+                    onClick={onClose}
+                    className={`${buttonClass.primary} w-24 flex-col`}
+                  >
                     {noText}
                   </span>
                   <span
@@ -49,6 +52,6 @@ export default function YesNoModal({
           )}
         </ModalContent>
       </Modal>
-    </div>
+    </>
   );
 }

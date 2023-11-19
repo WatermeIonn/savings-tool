@@ -66,6 +66,10 @@ export const addSavings = async (
     await prisma.goal.update({ where: { id: data.id }, data });
   }
 
+  if(amount.isZero()){
+    return updatedGoals;
+  }
+
   if (!event) {
     event = amount.isPositive()
       ? SavingsEventEnum.SAVINGS_ADDED

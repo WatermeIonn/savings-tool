@@ -12,6 +12,8 @@ export default async function handler(
 ) {
   let result: Goal | Goal[];
 
+  const id = req.query?.id ?? null;
+
   try {
     switch (req.method) {
       case "GET":
@@ -20,8 +22,16 @@ export default async function handler(
       case "POST":
         result = await createGoal(req.body);
         break;
+      case "PUT":
+        if (!id || Array.isArray(id)) {
+          return res
+            .status(400)
+            .json({ message: "Id of the record to delete must be provided" });
+        }
+
+        result = await updateGoal(id, req.body);
+        break;
       case "DELETE":
-        const id = req.query.id;
         if (!id || Array.isArray(id)) {
           return res
             .status(400)
@@ -42,7 +52,14 @@ export default async function handler(
 }
 
 export const getGoals = async (): Promise<Goal[]> => {
-  return await prisma.goal.findMany();
+  // TODO: custom sort?
+  return await prisma.goal.findMany(
+    {
+      orderBy: {
+        price: 'desc'
+      }
+    }
+  );
 };
 
 const createGoal = async (data: any): Promise<Goal> => {
@@ -52,6 +69,16 @@ const createGoal = async (data: any): Promise<Goal> => {
       name: data.name,
       price: new Decimal(data.price).toDP(2),
       saved: data.saved ? new Decimal(data.saved).toDP(2) : undefined,
+    },
+  });
+};
+
+const updateGoal = async (id: string, data: any): Promise<Goal> => {
+  return await prisma.goal.update({
+    where: { id },
+    data: {
+      name: data.name,
+      price: new Decimal(data.price).toDP(2),
     },
   });
 };

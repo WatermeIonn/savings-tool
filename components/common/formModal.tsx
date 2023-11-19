@@ -8,11 +8,11 @@ import {
   ModalHeader,
   useDisclosure,
 } from "@nextui-org/react";
-import { buttonClass } from "@/components/primitives";
 import Form from "./form";
 import { FormModalProps } from "@/props/FormModalProps";
 
 export default function FormModal<T>({
+  id,
   modalTitle,
   onSubmit,
   onChange,
@@ -25,10 +25,8 @@ export default function FormModal<T>({
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
 
   return (
-    <div className="flex justify-center">
-      <span onClick={onOpen} className={buttonClass.primary}>
-        {buttonContent}
-      </span>
+    <>
+      <span onClick={onOpen}>{buttonContent}</span>
       <Modal
         size={size ?? "lg"}
         isOpen={isOpen}
@@ -43,6 +41,7 @@ export default function FormModal<T>({
               </ModalHeader>
               <ModalBody>
                 <Form
+                  id={id}
                   onSubmit={onSubmit}
                   onChange={onChange}
                   onClose={onClose}
@@ -55,6 +54,6 @@ export default function FormModal<T>({
           )}
         </ModalContent>
       </Modal>
-    </div>
+    </>
   );
 }
