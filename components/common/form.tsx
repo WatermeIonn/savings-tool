@@ -72,7 +72,7 @@ export default function Form<T>({
   };
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form onSubmit={handleSubmit} autoComplete="off">
       {inputs.map(
         (
           {
