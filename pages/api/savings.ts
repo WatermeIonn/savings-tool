@@ -17,11 +17,9 @@ export default async function handler(
     }
 
     const amount = req.body.amount ? new Decimal(req.body.amount) : undefined;
-    const maxPercentage =
-      req.body.maxPercentage && req.body.maxPercentage / 100;
     const simulate = req.query.simulate === "true";
 
-    const updatedGoals = await addSavings(amount, maxPercentage, simulate);
+    const updatedGoals = await addSavings(amount, simulate);
     res.status(200).json(updatedGoals);
   } catch (e) {
     console.error("Encountered error in Savings API:", e);
@@ -31,30 +29,22 @@ export default async function handler(
 
 export const addSavings = async (
   amount?: Decimal,
-  maxPercentage?: number,
   simulate?: boolean,
   event?: string
 ): Promise<Goal[]> => {
   const existingGoals = await getGoals();
-  const totalToSave = existingGoals.reduce(
-    (runningTotal, { price }) => runningTotal.plus(price),
-    new Decimal(0)
-  );
 
   if (
     !existingGoals.length ||
     !amount ||
-    amount.isNaN() ||
-    (maxPercentage && isNaN(maxPercentage))
+    amount.isNaN()
   ) {
     return existingGoals;
   }
 
   const updatedGoals = calculateUpdatedGoals(
     existingGoals,
-    totalToSave,
-    amount,
-    maxPercentage
+    amount
   );
 
   if (simulate) {
@@ -66,7 +56,7 @@ export const addSavings = async (
     await prisma.goal.update({ where: { id: data.id }, data });
   }
 
-  if(amount.isZero()){
+  if (amount.isZero()) {
     return updatedGoals;
   }
 
@@ -88,59 +78,91 @@ export const addSavings = async (
 
 const calculateUpdatedGoals = (
   existingGoals: Goal[],
-  totalToSave: Decimal,
-  amount: Decimal,
-  maxPercentage?: number
+  amountToAdd: Decimal
 ): Goal[] => {
-  let amountAboveMaxPercentage = new Decimal(0);
-  let totalPercentagesUnderMax = new Decimal(0);
+  const totalThatNeedsToBeSaved = existingGoals.reduce(
+    (runningTotal, { price }) => runningTotal.plus(price),
+    new Decimal(0)
+  );
 
-  if (maxPercentage) {
-    amountAboveMaxPercentage = existingGoals.reduce((runningTotal, goal) => {
-      const priceToTotal = goal.price.dividedBy(totalToSave);
-      return priceToTotal.greaterThan(maxPercentage)
-        ? runningTotal.add(priceToTotal.minus(maxPercentage).times(amount))
-        : runningTotal;
-    }, new Decimal(0));
+  let remainingAmount = new Decimal(0);
+  const updatedGoals: Goal[] = [];
 
-    totalPercentagesUnderMax = existingGoals.reduce((runningTotal, goal) => {
-      const priceToTotal = goal.price.dividedBy(totalToSave);
-      return priceToTotal.lessThan(maxPercentage)
-        ? runningTotal.add(priceToTotal)
-        : runningTotal;
-    }, new Decimal(0));
+  // First pass: distribute proportionally and collect overflow
+  for (const goal of existingGoals) {
+    const goalProportion = goal.price.dividedBy(totalThatNeedsToBeSaved);
+    const proportionalAmount = amountToAdd.times(goalProportion);
+    
+    let amountToAddToGoal: Decimal;
+    
+    if (amountToAdd.isNegative()) {
+      // For negative amounts, ensure we don't go below 0
+      const maxCanRemove = goal.saved.negated(); // Maximum we can remove (as negative)
+      amountToAddToGoal = Decimal.max(proportionalAmount, maxCanRemove);
+    } else {
+      // For positive amounts, ensure we don't exceed goal price
+      const remainingCapacity = goal.price.minus(goal.saved);
+      amountToAddToGoal = Decimal.min(proportionalAmount, remainingCapacity);
+    }
+    
+    // Track overflow amount that couldn't be added to this goal
+    const overflow = proportionalAmount.minus(amountToAddToGoal);
+    remainingAmount = remainingAmount.plus(overflow);
+
+    updatedGoals.push({
+      ...goal,
+      saved: goal.saved.plus(amountToAddToGoal).toDP(2),
+    });
   }
 
-  return existingGoals.map((goal) => {
-    let saved = new Decimal(0);
-    const priceToTotal = goal.price.dividedBy(totalToSave);
-
-    if (maxPercentage && priceToTotal.greaterThan(maxPercentage)) {
-      saved = amount.times(maxPercentage);
+  // Second pass: distribute any remaining amount to goals that still have capacity
+  if (!remainingAmount.isZero()) {
+    let goalsWithCapacity: Goal[];
+    
+    if (remainingAmount.isPositive()) {
+      // For positive remaining amount, find goals that can accept more
+      goalsWithCapacity = updatedGoals.filter(goal => 
+        goal.saved.lessThan(goal.price)
+      );
     } else {
-      saved = amount.times(priceToTotal);
+      // For negative remaining amount, find goals that have savings to remove
+      goalsWithCapacity = updatedGoals.filter(goal => 
+        goal.saved.greaterThan(0)
+      );
+    }
 
-      if (
-        !amountAboveMaxPercentage.isZero() &&
-        !totalPercentagesUnderMax.isZero()
-      ) {
-        saved = saved.add(
-          priceToTotal
-            .dividedBy(totalPercentagesUnderMax)
-            .times(amountAboveMaxPercentage)
-        );
+    if (goalsWithCapacity.length > 0) {
+      const amountPerGoal = remainingAmount.dividedBy(goalsWithCapacity.length);
+      
+      for (let i = 0; i < updatedGoals.length; i++) {
+        const goal = updatedGoals[i];
+        
+        let hasCapacity = false;
+        let maxAmount: Decimal;
+        
+        if (remainingAmount.isPositive()) {
+          hasCapacity = goal.saved.lessThan(goal.price);
+          maxAmount = goal.price.minus(goal.saved);
+        } else {
+          hasCapacity = goal.saved.greaterThan(0);
+          maxAmount = goal.saved.negated(); // Maximum we can remove (as negative)
+        }
+        
+        if (hasCapacity && !remainingAmount.isZero()) {
+          const amountToAdd = remainingAmount.isPositive() 
+            ? Decimal.min(amountPerGoal, maxAmount)
+            : Decimal.max(amountPerGoal, maxAmount);
+          
+          updatedGoals[i] = {
+            ...goal,
+            saved: goal.saved.plus(amountToAdd).toDP(2),
+          };
+          
+          remainingAmount = remainingAmount.minus(amountToAdd);
+        }
       }
     }
+  }
 
-    let newSavedValue = goal.saved.add(saved);
-
-    if (newSavedValue.greaterThan(goal.price)) {
-      newSavedValue = goal.price;
-    }
-
-    return {
-      ...goal,
-      saved: newSavedValue.toDP(2),
-    };
-  });
+  return updatedGoals;
 };

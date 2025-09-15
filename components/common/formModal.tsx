@@ -1,15 +1,9 @@
 "use client";
 
 import React from "react";
-import {
-  Modal,
-  ModalBody,
-  ModalContent,
-  ModalHeader,
-  useDisclosure,
-} from "@nextui-org/react";
 import Form from "./form";
 import { FormModalProps } from "@/props/FormModalProps";
+import { Modal, ModalBody, ModalContent, ModalHeader, useDisclosure } from "@heroui/modal";
 
 export default function FormModal<T>({
   id,
@@ -47,8 +41,8 @@ export default function FormModal<T>({
                   onClose={onClose}
                   submitText={submitText}
                   formInputs={formInputs}
+                  renderBottomContent={renderBottomContent}
                 />
-                {renderBottomContent && renderBottomContent()}
               </ModalBody>
             </>
           )}

@@ -1,11 +1,12 @@
 "use client";
 
-import React, { ChangeEvent, SyntheticEvent, useState } from "react";
-import { Button, Input } from "@nextui-org/react";
+import React, { ChangeEvent, SyntheticEvent, useState, useCallback, useRef } from "react";
 import { buttonClass } from "@/components/primitives";
 import { inputsToDto } from "@/utils/dto.util";
 import { FormProps } from "@/props/FormProps";
 import { BaseInput } from "@/classes/BaseInput";
+import { Input } from "@heroui/input";
+import { Button } from "@heroui/button";
 
 export default function Form<T>({
   id,
@@ -14,8 +15,10 @@ export default function Form<T>({
   onClose,
   submitText,
   formInputs,
+  renderBottomContent
 }: FormProps<T> & { onClose?: (e: SyntheticEvent) => void }) {
   const [inputs, setInputs] = useState<BaseInput[]>(formInputs);
+  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const updateInput = (inputToUpdate: BaseInput): void => {
     const inputsCopy = inputs.map((input) => {
@@ -34,6 +37,18 @@ export default function Form<T>({
     return success;
   };
 
+  const debouncedOnChange = useCallback((updatedInputs: BaseInput[]) => {
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current);
+    }
+
+    debounceTimeoutRef.current = setTimeout(() => {
+      if (onChange) {
+        onChange(inputsToDto(updatedInputs));
+      }
+    }, 300); // 300ms debounce
+  }, [onChange]);
+
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     const inputToUpdate = inputs.find((input) => input.name === name);
@@ -43,10 +58,15 @@ export default function Form<T>({
     }
 
     inputToUpdate.value = value;
-    updateInput(inputToUpdate);
-    if (onChange) {
-      onChange(inputsToDto(inputs));
-    }
+    const updatedInputs = inputs.map((input) => {
+      if (input.name === inputToUpdate.name) {
+        return inputToUpdate;
+      }
+      return input;
+    });
+
+    setInputs(updatedInputs);
+    debouncedOnChange(updatedInputs);
   };
 
   const handleSubmit = (e: SyntheticEvent) => {
@@ -106,6 +126,7 @@ export default function Form<T>({
             />
           )
       )}
+      {renderBottomContent && <div className="mb-5">{renderBottomContent()}</div>}
       <div>
         <Button className={`${buttonClass.primary} float-right`} type="submit">
           {submitText ?? "Submit"}

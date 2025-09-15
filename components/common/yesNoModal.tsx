@@ -1,14 +1,8 @@
 "use client";
 
-import {
-  Modal,
-  ModalBody,
-  ModalContent,
-  ModalHeader,
-  useDisclosure,
-} from "@nextui-org/react";
 import { buttonClass } from "@/components/primitives";
 import { YesNoModalProps } from "@/props/YesNoModalProps";
+import { Modal, ModalBody, ModalContent, ModalHeader, useDisclosure } from "@heroui/modal";
 
 export default function YesNoModal({
   buttonContent,

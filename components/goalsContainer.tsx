@@ -1,48 +1,61 @@
 "use client";
 
-import React, { ReactNode, useEffect, useState } from "react";
-import { IconEdit, IconMoneybag, IconPlus, IconX } from "@tabler/icons-react";
-import FormModal from "./common/formModal";
-import axios from "axios";
-import { Goal, Saving } from "@prisma/client";
-import YesNoModal from "./common/yesNoModal";
-import GoalsTable from "./goalsTable";
 import { BaseInput } from "@/classes/BaseInput";
 import { NumberInput } from "@/classes/NumberInput";
-import { PercentageInput } from "@/classes/PercentageInput";
+import { Goal, Saving } from "@prisma/client";
+import { IconEdit, IconMoneybag, IconPlus, IconX } from "@tabler/icons-react";
 import Decimal from "decimal.js";
+import { ReactNode, useEffect, useState } from "react";
+import FormModal from "./common/formModal";
+import YesNoModal from "./common/yesNoModal";
+import GoalsTable from "./goalsTable";
 import { buttonClass } from "./primitives";
 
 export default function GoalsContainer() {
-  const [isLoading, setIsLoading] = useState(false);
+  const [isMainTableLoading, setIsMainTableLoading] = useState(false);
+  const [isPreviewTableLoading, setIsPreviewTableLoading] = useState(false);
   const [goals, setGoals] = useState<Goal[]>([]);
   const [goalsPreview, setGoalsPreview] = useState<Goal[]>([]);
 
   useEffect(() => {
-    setIsLoading(true);
-    axios.get("http://localhost:3000/api/goal").then((res) => {
-      const goals = res.data.map((goal: any) => jsonToGoal(goal));
-      setGoals(goals);
+    setIsMainTableLoading(true);
+    fetch("http://localhost:3000/api/goal")
+      .then((res) => res.json())
+      .then((data) => {
+        const goals = data.map((goal: any) => jsonToGoal(goal));
+        setGoals(goals);
 
-      if (!goalsPreview.length) {
-        setGoalsPreview(goals);
-      }
+        if (!goalsPreview.length) {
+          setGoalsPreview(goals);
+        }
 
-      setIsLoading(false);
-    });
+        setIsMainTableLoading(false);
+      });
   }, []);
 
   const handleAddGoal = (goal: Goal): void => {
-    axios
-      .post("http://localhost:3000/api/goal", goal)
-      .then((res) => setGoals([...goals, jsonToGoal(res.data)]));
+    fetch("http://localhost:3000/api/goal", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(goal),
+    })
+      .then((res) => res.json())
+      .then((data) => setGoals([...goals, jsonToGoal(data)]));
   };
 
   const handleEditGoal = (goal: Goal): void => {
-    axios
-      .put(`http://localhost:3000/api/goal?id=${goal.id}`, goal)
-      .then((res) => {
-        const editedGoal = jsonToGoal(res.data);
+    fetch(`http://localhost:3000/api/goal?id=${goal.id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(goal),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        const editedGoal = jsonToGoal(data);
         const index = goals.findIndex((goal) => goal.id === editedGoal.id)
 
         goals[index] = editedGoal;
@@ -51,26 +64,38 @@ export default function GoalsContainer() {
   };
 
   const handleAddSaving = (saving: Saving, simulate?: boolean): void => {
-    axios
-      .post(
-        `http://localhost:3000/api/savings${simulate ? "?simulate=true" : ""}`,
-        saving
-      )
-      .then((res) => {
-        const goals = res.data.map((goal: any) => jsonToGoal(goal));
+    setIsPreviewTableLoading(true);
+    fetch(
+      `http://localhost:3000/api/savings${simulate ? "?simulate=true" : ""}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(saving),
+      }
+    )
+      .then((res) => res.json())
+      .then((data) => {
+        const goals = data.map((goal: any) => jsonToGoal(goal));
         setGoalsPreview(goals);
         if (!simulate) {
           setGoals(goals);
         }
+        setIsPreviewTableLoading(false);
       });
   };
 
   const handleRemoveGoal = (goal: Goal): void => {
-    axios.delete(`http://localhost:3000/api/goal?id=${goal.id}`).then((res) => {
-      const goals: Goal[] = res.data.map((goal: any) => jsonToGoal(goal));
-      setGoalsPreview(goals);
-      setGoals(goals);
-    });
+    fetch(`http://localhost:3000/api/goal?id=${goal.id}`, {
+      method: "DELETE",
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        const goals: Goal[] = data.map((goal: any) => jsonToGoal(goal));
+        setGoalsPreview(goals);
+        setGoals(goals);
+      });
   };
 
   const renderBottomContent = (): ReactNode => (
@@ -119,16 +144,9 @@ export default function GoalsContainer() {
               startContent: "£",
               isRequired: true,
             }),
-            new PercentageInput({
-              label: "Max Percentage",
-              name: "maxPercentage",
-              endContent: "%",
-              description:
-                "Set this to define a maximum percentage that can be allocated. Any remaining money is spread across other goals.",
-            }),
           ]}
           renderBottomContent={() => (
-            <GoalsTable isLoading={false} goals={goalsPreview} />
+            <GoalsTable isLoading={isPreviewTableLoading} goals={goalsPreview} />
           )}
         />
       </div>
@@ -178,7 +196,7 @@ export default function GoalsContainer() {
 
   return (
     <GoalsTable
-      isLoading={isLoading}
+      isLoading={isMainTableLoading}
       goals={goals}
       renderBottomContent={renderBottomContent}
       renderRowOptionContent={renderRowOptionContent}
