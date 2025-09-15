@@ -1,10 +1,9 @@
 import { ErrorResponse } from "@/types/ErrorResponse.type";
-import { Goal, PrismaClient } from "@prisma/client";
+import { Goal } from "@prisma/client";
 import { NextApiRequest, NextApiResponse } from "next";
 import { addSavings } from "./savings";
 import Decimal from "decimal.js";
-
-const prisma = new PrismaClient();
+import { getPrismaClient } from "@/lib/database";
 
 export default async function handler(
   req: NextApiRequest,
@@ -44,8 +43,8 @@ export default async function handler(
           return res.status(400).json({ message: 'Id of the record to delete must be provided' });
         }
 
-        await deleteGoal(id);
-        return res.status(200).json({ message: 'Goal deleted successfully' });
+        result = await deleteGoal(id);
+        break;
       default:
         throw Error(`Unrecognised HTTP method ${req.method}.`);
     }
@@ -58,10 +57,12 @@ export default async function handler(
 }
 
 export const getGoals = async (sort?: string, direction?: string): Promise<Goal[]> => {
+  const prisma = getPrismaClient();
   return await prisma.goal.findMany(sort && direction ? { orderBy: { [sort]: direction === 'ascending' ? 'asc' : 'desc' } } : undefined);
 };
 
 const createGoal = async (data: any): Promise<Goal> => {
+  const prisma = getPrismaClient();
   return await prisma.goal.create({
     data: {
       id: data.id,
@@ -73,6 +74,7 @@ const createGoal = async (data: any): Promise<Goal> => {
 };
 
 const updateGoal = async (id: string, data: any): Promise<Goal> => {
+  const prisma = getPrismaClient();
   return await prisma.goal.update({
     where: { id },
     data: {
@@ -82,6 +84,8 @@ const updateGoal = async (id: string, data: any): Promise<Goal> => {
   });
 };
 
-const deleteGoal = async (id: string): Promise<void> => {
+const deleteGoal = async (id: string): Promise<Goal[]> => {
+  const prisma = getPrismaClient();
   await prisma.goal.delete({ where: { id } });
+  return await getGoals();
 };

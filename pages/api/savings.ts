@@ -1,12 +1,11 @@
 import { ErrorResponse } from '@/types/ErrorResponse.type';
-import { Goal, PrismaClient, Saving } from '@prisma/client';
+import { Goal, Saving } from '@prisma/client';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getGoals } from './goal';
 import { SavingsEventEnum } from '@/enums/SavingsEventEnum';
 import { Decimal } from 'decimal.js';
+import { getPrismaClient } from '@/lib/database';
 import { AllocationStrategyFactory, AllocationType } from '@/strategies/AllocationStrategyFactory';
-
-const prisma = new PrismaClient();
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse<Goal | Goal[] | ErrorResponse>) {
   try {
@@ -49,6 +48,7 @@ export const addSavings = async (
     return updatedGoals;
   }
 
+  const prisma = getPrismaClient();
   for (const data of updatedGoals) {
     await prisma.goal.update({ where: { id: data.id }, data });
   }
