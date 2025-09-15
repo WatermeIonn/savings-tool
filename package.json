@@ -11,9 +11,26 @@
   },
   "build": {
     "files": [
-      "dist/**/*",
-      "package.json"
-    ]
+      ".next/**/*",
+      "build/electron/**/*",
+      "public/**/*",
+      "prisma/schema.prisma",
+      "package.json",
+      "node_modules/**/*"
+    ],
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "public/favicon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    }
   },
   "scripts": {
     "start": "next start",
@@ -22,58 +39,59 @@
     "lint": "next lint",
     "postinstall": "electron-builder install-app-deps",
     "electron:dev": "concurrently \"cross-env BROWSER=none npm run dev\" \"wait-on http://127.0.0.1:3000 && tsc -p electron -w\" \"wait-on http://127.0.0.1:3000 && tsc -p electron && electron .\"",
-    "electron:build": "npm run build && tsc -p electron && ./node_modules/.bin/electron-builder",
+    "electron:build": "npm run build && tsc -p electron && ./node_modules/.bin/electron-builder --win",
     "eject": "react-scripts eject",
     "typeorm": "node ./node_modules/typeorm/cli"
   },
   "dependencies": {
-    "@heroui/button": "^2.2.24",
-    "@heroui/input": "^2.4.25",
-    "@heroui/modal": "^2.2.21",
-    "@heroui/progress": "^2.2.20",
-    "@heroui/react": "^2.8.2",
-    "@heroui/spinner": "^2.2.21",
-    "@heroui/system": "^2.4.20",
-    "@heroui/table": "^2.2.24",
-    "@heroui/theme": "^2.4.20",
-    "@prisma/client": "^6.14.0",
+    "@heroui/accordion": "^2.2.23",
+    "@heroui/button": "^2.2.26",
+    "@heroui/dropdown": "^2.3.26",
+    "@heroui/input": "^2.4.27",
+    "@heroui/modal": "^2.2.23",
+    "@heroui/progress": "^2.2.21",
+    "@heroui/react": "^2.8.4",
+    "@heroui/spinner": "^2.2.23",
+    "@heroui/system": "^2.4.22",
+    "@heroui/table": "^2.2.26",
+    "@heroui/theme": "^2.4.22",
+    "@prisma/client": "^6.16.1",
     "@react-aria/ssr": "^3.9.10",
-    "@react-aria/visually-hidden": "^3.8.26",
+    "@react-aria/visually-hidden": "^3.8.27",
     "@tabler/icons-react": "^3.34.1",
-    "@tailwindcss/postcss": "^4.1.12",
+    "@tailwindcss/oxide": "^4.1.13",
+    "@tailwindcss/postcss": "^4.1.13",
     "autoprefixer": "^10.4.21",
-    "axios": "^1.11.0",
     "class-transformer": "^0.5.1",
     "clsx": "^2.1.1",
     "decimal.js": "^10.6.0",
-    "eslint": "9.34.0",
-    "eslint-config-next": "15.5.0",
+    "eslint": "9.35.0",
+    "eslint-config-next": "15.5.3",
     "framer-motion": "^12.23.12",
     "intl-messageformat": "^10.7.16",
     "next-themes": "^0.4.6",
     "postcss": "^8.5.6",
-    "prisma": "^6.14.0",
+    "prisma": "^6.16.1",
     "reflect-metadata": "^0.2.2",
-    "tailwind-variants": "^3.0.0",
-    "tailwindcss": "^4.1.12",
+    "tailwind-variants": "^3.1.1",
+    "tailwindcss": "^4.1.13",
     "web-vitals": "^5.1.0"
   },
   "devDependencies": {
     "@types/electron-devtools-installer": "^4.0.0",
-    "@types/node": "24.3.0",
-    "@types/react": "19.1.11",
-    "@types/react-dom": "19.1.7",
-    "concurrently": "^9.2.0",
+    "@types/node": "24.4.0",
+    "@types/react": "19.1.13",
+    "@types/react-dom": "19.1.9",
+    "concurrently": "^9.2.1",
     "cross-env": "^10.0.0",
-    "electron": "^37.3.1",
-    "electron-builder": "^26.0.12",
+    "electron": "^38.1.0",
+    "electron-builder": "25.1.8",
     "electron-devtools-installer": "^4.0.0",
     "electron-reload": "^1.5.0",
-    "next": "15.5.0",
+    "next": "15.5.3",
     "react": "19.1.1",
     "react-dom": "19.1.1",
     "typescript": "^5.9.2",
-    "wait-on": "^8.0.4",
-    "webpack-filter-warnings-plugin": "^1.2.1"
+    "wait-on": "^8.0.5"
   }
 }

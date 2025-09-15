@@ -18,7 +18,7 @@ export default function YesNoModal({
       <span onClick={onOpen} className="cursor-pointer">
         {buttonContent}
       </span>
-      <Modal isOpen={isOpen} onOpenChange={onOpenChange} isDismissable={false}>
+      <Modal isOpen={isOpen} onOpenChange={onOpenChange}>
         <ModalContent>
           {(onClose) => (
             <>

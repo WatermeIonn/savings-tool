@@ -1,7 +1,8 @@
-'use client' 
- 
+'use client'
+
+import { buttonClass } from '@/components/primitives'
 import { useEffect } from 'react'
- 
+
 export default function Error({
   error,
   reset,
@@ -13,11 +14,12 @@ export default function Error({
     // Log the error to an error reporting service
     console.error(error)
   }, [error])
- 
+
   return (
     <div>
       <h2>Something went wrong!</h2>
       <button
+        className={buttonClass.primary}
         onClick={
           // Attempt to recover by trying to re-render the segment
           () => reset()

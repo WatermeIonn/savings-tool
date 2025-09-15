@@ -25,7 +25,6 @@ export default function FormModal<T>({
         size={size ?? "lg"}
         isOpen={isOpen}
         onOpenChange={onOpenChange}
-        isDismissable={false}
       >
         <ModalContent>
           {(onClose) => (

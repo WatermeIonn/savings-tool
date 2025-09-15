@@ -13,53 +13,52 @@ export default async function handler(
   let result: Goal | Goal[];
 
   const id = req.query?.id ?? null;
+  const sort = req.query?.sort ?? undefined;
+  const direction = req.query?.direction ?? undefined;
+
+  if(sort && typeof sort !== 'string'){
+    return res.status(400).json({ message: `Unrecognised sort type ${sort}` });
+  }
+
+  if(direction && (typeof direction !== 'string' || (direction !== 'ascending' && direction !== 'descending'))){
+    return res.status(400).json({ message: `Unrecognised direction type ${direction}`});
+  }
 
   try {
     switch (req.method) {
-      case "GET":
-        result = await getGoals();
+      case 'GET':
+        result = await getGoals(sort, direction);
         break;
-      case "POST":
+      case 'POST':
         result = await createGoal(req.body);
         break;
-      case "PUT":
+      case 'PUT':
         if (!id || Array.isArray(id)) {
-          return res
-            .status(400)
-            .json({ message: "Id of the record to delete must be provided" });
+          return res.status(400).json({ message: 'Id of the record to update must be provided' });
         }
 
         result = await updateGoal(id, req.body);
         break;
-      case "DELETE":
+      case 'DELETE':
         if (!id || Array.isArray(id)) {
-          return res
-            .status(400)
-            .json({ message: "Id of the record to delete must be provided" });
+          return res.status(400).json({ message: 'Id of the record to delete must be provided' });
         }
 
-        result = await deleteGoal(id);
-        break;
+        await deleteGoal(id);
+        return res.status(200).json({ message: 'Goal deleted successfully' });
       default:
         throw Error(`Unrecognised HTTP method ${req.method}.`);
     }
 
     return res.status(200).json(result);
   } catch (e) {
-    console.error("Encountered error in Goal API:", e);
-    res.status(500).json({ message: "Encountered unkown error" });
+    console.error('Encountered error in Goal API:', e);
+    res.status(500).json({ message: 'Encountered unknown error' });
   }
 }
 
-export const getGoals = async (): Promise<Goal[]> => {
-  // TODO: custom sort?
-  return await prisma.goal.findMany(
-    {
-      orderBy: {
-        price: 'desc'
-      }
-    }
-  );
+export const getGoals = async (sort?: string, direction?: string): Promise<Goal[]> => {
+  return await prisma.goal.findMany(sort && direction ? { orderBy: { [sort]: direction === 'ascending' ? 'asc' : 'desc' } } : undefined);
 };
 
 const createGoal = async (data: any): Promise<Goal> => {
@@ -83,17 +82,6 @@ const updateGoal = async (id: string, data: any): Promise<Goal> => {
   });
 };
 
-const deleteGoal = async (id: string): Promise<Goal[]> => {
-  const goal = await prisma.goal.delete({ where: { id } });
-
-  if (!goal.saved.equals(goal.price)) {
-    await addSavings(
-      goal.saved,
-      undefined,
-      undefined,
-      `Removed goal ${goal.name}`
-    );
-  }
-
-  return await getGoals();
+const deleteGoal = async (id: string): Promise<void> => {
+  await prisma.goal.delete({ where: { id } });
 };

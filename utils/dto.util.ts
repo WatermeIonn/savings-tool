@@ -1,6 +1,6 @@
-import { BaseInput } from "@/classes/BaseInput";
+import { Input } from "@/classes/Input";
 
-export function inputsToDto<T>(inputs: BaseInput[], id?: string): T {
+export function inputsToDto<T>(inputs: Input[], id?: string): T {
   let dto: any = {};
 
   for (const input of inputs) {
@@ -16,4 +16,18 @@ export function inputsToDto<T>(inputs: BaseInput[], id?: string): T {
   }
 
   return dto as T;
+}
+
+export function inputsToCustomVars(inputs: Input[]): { [key: string]: string } {
+  let customVars: { [key: string]: string } = {};
+
+  for (const input of inputs) {
+    if (!input.isCustomVar) {
+      continue;
+    }
+
+    customVars[input.name] = input.getValue();
+  }
+
+  return customVars;
 }

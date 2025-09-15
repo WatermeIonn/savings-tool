@@ -11,10 +11,11 @@ datasource db {
 }
 
 model Goal {
-  id    String  @id @default(uuid())
-  name  String
-  price Decimal
-  saved Decimal @default(0)
+  id        String   @id @default(uuid())
+  name      String
+  price     Decimal
+  saved     Decimal  @default(0)
+  dateAdded DateTime @default(now())
 }
 
 model Saving {

@@ -1,12 +1,11 @@
-"use client";
+'use client';
 
-import React, { ChangeEvent, SyntheticEvent, useState, useCallback, useRef } from "react";
-import { buttonClass } from "@/components/primitives";
-import { inputsToDto } from "@/utils/dto.util";
-import { FormProps } from "@/props/FormProps";
-import { BaseInput } from "@/classes/BaseInput";
-import { Input } from "@heroui/input";
-import { Button } from "@heroui/button";
+import { Input } from '@/classes/Input';
+import { buttonClass } from '@/components/primitives';
+import { FormProps } from '@/props/FormProps';
+import { inputsToDto, inputsToCustomVars } from '@/utils/dto.util';
+import { Button } from '@heroui/button';
+import React, { SyntheticEvent, useState, useCallback, useRef } from 'react';
 
 export default function Form<T>({
   id,
@@ -15,12 +14,22 @@ export default function Form<T>({
   onClose,
   submitText,
   formInputs,
-  renderBottomContent
+  renderBottomContent,
 }: FormProps<T> & { onClose?: (e: SyntheticEvent) => void }) {
-  const [inputs, setInputs] = useState<BaseInput[]>(formInputs);
+  const [inputs, setInputs] = useState<Input[]>(formInputs);
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const updateInput = (inputToUpdate: BaseInput): void => {
+  const debouncedOnChange = useCallback((updatedInputs: Input[]) => {
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current);
+    }
+    
+    debounceTimeoutRef.current = setTimeout(() => {
+      onChange?.(inputsToDto(updatedInputs, id), inputsToCustomVars(updatedInputs));
+    }, 300);
+  }, [onChange, id]);
+
+  const updateInput = (inputToUpdate: Input): void => {
     const inputsCopy = inputs.map((input) => {
       if (input.name === inputToUpdate.name) {
         return inputToUpdate;
@@ -29,44 +38,17 @@ export default function Form<T>({
     });
 
     setInputs(inputsCopy);
+    
+    // Call debounced onChange with updated inputs
+    if (onChange) {
+      debouncedOnChange(inputsCopy);
+    }
   };
 
-  const validateInput = (input: BaseInput): boolean => {
+  const validateInput = (input: Input): boolean => {
     const success = input.validate();
     updateInput(input);
     return success;
-  };
-
-  const debouncedOnChange = useCallback((updatedInputs: BaseInput[]) => {
-    if (debounceTimeoutRef.current) {
-      clearTimeout(debounceTimeoutRef.current);
-    }
-
-    debounceTimeoutRef.current = setTimeout(() => {
-      if (onChange) {
-        onChange(inputsToDto(updatedInputs));
-      }
-    }, 300); // 300ms debounce
-  }, [onChange]);
-
-  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    const inputToUpdate = inputs.find((input) => input.name === name);
-
-    if (!inputToUpdate) {
-      throw new Error(`Could not find input ${name} to update!`);
-    }
-
-    inputToUpdate.value = value;
-    const updatedInputs = inputs.map((input) => {
-      if (input.name === inputToUpdate.name) {
-        return inputToUpdate;
-      }
-      return input;
-    });
-
-    setInputs(updatedInputs);
-    debouncedOnChange(updatedInputs);
   };
 
   const handleSubmit = (e: SyntheticEvent) => {
@@ -88,48 +70,22 @@ export default function Form<T>({
       onClose(e);
     }
 
-    onSubmit(inputsToDto(inputs, id));
+    onSubmit(inputsToDto(inputs, id), inputsToCustomVars(inputs));
   };
 
   return (
     <form onSubmit={handleSubmit} autoComplete="off">
-      {inputs.map(
-        (
-          {
-            label,
-            name,
-            startContent,
-            endContent,
-            hasError,
-            errorMessage,
-            customInput,
-            isRequired,
-            description,
-            value
-          },
-          key
-        ) =>
-          customInput || (
-            <Input
-              autoFocus={key === 0}
-              key={key}
-              label={isRequired ? `${label} (*)` : label}
-              name={name}
-              className="mb-5 w-full"
-              onChange={handleChange}
-              startContent={startContent}
-              endContent={endContent}
-              isInvalid={hasError}
-              errorMessage={errorMessage}
-              description={description}
-              defaultValue={value}
-            />
-          )
-      )}
+      {inputs.map((input, key) => (
+        <React.Fragment key={key}>
+          {input.getContent((input: Input) => {
+            updateInput(input);
+          }, key === 0)()}
+        </React.Fragment>
+      ))}
       {renderBottomContent && <div className="mb-5">{renderBottomContent()}</div>}
       <div>
         <Button className={`${buttonClass.primary} float-right`} type="submit">
-          {submitText ?? "Submit"}
+          {submitText ?? 'Submit'}
         </Button>
       </div>
     </form>
