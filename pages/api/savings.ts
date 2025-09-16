@@ -1,34 +1,49 @@
-import { ErrorResponse } from '@/types/ErrorResponse.type';
-import { Goal, Saving } from '@prisma/client';
-import { NextApiRequest, NextApiResponse } from 'next';
-import { getGoals } from './goal';
 import { SavingsEventEnum } from '@/enums/SavingsEventEnum';
-import { Decimal } from 'decimal.js';
 import { getPrismaClient } from '@/lib/database';
 import { AllocationStrategyFactory, AllocationType } from '@/strategies/AllocationStrategyFactory';
+import { ErrorResponse } from '@/types/ErrorResponse.type';
+import { Goal, Saving } from '@prisma/client';
+import { Decimal } from 'decimal.js';
+import { NextApiRequest, NextApiResponse } from 'next';
+import { getGoals } from './goal';
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse<Goal | Goal[] | ErrorResponse>) {
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse<Goal | Goal[] | Saving[] | ErrorResponse>
+) {
   try {
-    if (req.method !== 'POST') {
+    if (!['POST', 'GET'].includes(req.method ?? '')) {
       throw Error(`Unrecognised HTTP method ${req.method}.`);
     }
 
-    const amount = req.body.amount ? new Decimal(req.body.amount) : null;
-    const allocationType = req.query.allocationType;
-    const simulate = req.query.simulate === 'true';
-
-    const supportedTypes = AllocationStrategyFactory.getSupportedTypes();
-    if (!allocationType || typeof allocationType !== 'string' || !supportedTypes.includes(allocationType)) {
-      throw Error(`Unrecognised allocation type ${allocationType}. Supported types: ${supportedTypes.join(', ')}`);
+    if (req.method === 'GET') {
+      const savings = await getSavings();
+      res.status(200).json(savings);
     }
 
-    const updatedGoals = await addSavings(amount, allocationType as AllocationType, simulate);
-    res.status(200).json(updatedGoals);
+    if (req.method === 'POST') {
+      const amount = req.body.amount ? new Decimal(req.body.amount) : null;
+      const allocationType = req.query.allocationType;
+      const simulate = req.query.simulate === 'true';
+
+      const supportedTypes = AllocationStrategyFactory.getSupportedTypes();
+      if (!allocationType || typeof allocationType !== 'string' || !supportedTypes.includes(allocationType)) {
+        throw Error(`Unrecognised allocation type ${allocationType}. Supported types: ${supportedTypes.join(', ')}`);
+      }
+
+      const updatedGoals = await addSavings(amount, allocationType as AllocationType, simulate);
+      res.status(200).json(updatedGoals);
+    }
   } catch (e) {
     console.error('Encountered error in Savings API:', e);
     res.status(500).json({ message: 'Encountered unknown error' });
   }
 }
+
+export const getSavings = async (): Promise<Saving[]> => {
+  const prisma = getPrismaClient();
+  return prisma.saving.findMany();
+};
 
 export const addSavings = async (
   amount: Decimal | null,

@@ -1,32 +1,34 @@
-import { ErrorResponse } from "@/types/ErrorResponse.type";
-import { Goal } from "@prisma/client";
-import { NextApiRequest, NextApiResponse } from "next";
-import { addSavings } from "./savings";
-import Decimal from "decimal.js";
-import { getPrismaClient } from "@/lib/database";
+import { ErrorResponse } from '@/types/ErrorResponse.type';
+import { Goal } from '@prisma/client';
+import { NextApiRequest, NextApiResponse } from 'next';
+import { addSavings } from './savings';
+import Decimal from 'decimal.js';
+import { getPrismaClient } from '@/lib/database';
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse<Goal | Goal[] | ErrorResponse>
-) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse<Goal | Goal[] | ErrorResponse>) {
   let result: Goal | Goal[];
 
   const id = req.query?.id ?? null;
   const sort = req.query?.sort ?? undefined;
   const direction = req.query?.direction ?? undefined;
+  const status = req.query?.status ?? undefined;
 
-  if(sort && typeof sort !== 'string'){
+  if (sort && typeof sort !== 'string') {
     return res.status(400).json({ message: `Unrecognised sort type ${sort}` });
   }
 
-  if(direction && (typeof direction !== 'string' || (direction !== 'ascending' && direction !== 'descending'))){
-    return res.status(400).json({ message: `Unrecognised direction type ${direction}`});
+  if (direction && (typeof direction !== 'string' || (direction !== 'ascending' && direction !== 'descending'))) {
+    return res.status(400).json({ message: `Unrecognised direction type ${direction}` });
+  }
+
+  if (status && (typeof status !== 'string' || (status !== 'ACTIVE' && status !== 'COMPLETED'))) {
+    return res.status(400).json({ message: `Unrecognised status type ${status}` });
   }
 
   try {
     switch (req.method) {
       case 'GET':
-        result = await getGoals(sort, direction);
+        result = await getGoals(sort, direction, status as 'ACTIVE' | 'COMPLETED' | undefined);
         break;
       case 'POST':
         result = await createGoal(req.body);
@@ -56,9 +58,20 @@ export default async function handler(
   }
 }
 
-export const getGoals = async (sort?: string, direction?: string): Promise<Goal[]> => {
+export const getGoals = async (
+  sort?: string,
+  direction?: string,
+  status: 'COMPLETED' | 'ACTIVE' = 'ACTIVE'
+): Promise<Goal[]> => {
   const prisma = getPrismaClient();
-  return await prisma.goal.findMany(sort && direction ? { orderBy: { [sort]: direction === 'ascending' ? 'asc' : 'desc' } } : undefined);
+  return await prisma.goal.findMany({
+    where: {
+      status: {
+        equals: status,
+      },
+    },
+    ...(sort && direction ? { orderBy: { [sort]: direction === 'ascending' ? 'asc' : 'desc' } } : {}),
+  });
 };
 
 const createGoal = async (data: any): Promise<Goal> => {
@@ -80,12 +93,17 @@ const updateGoal = async (id: string, data: any): Promise<Goal> => {
     data: {
       name: data.name,
       price: new Decimal(data.price).toDP(2),
+      status: data.status,
+      dateCompleted: data.dateCompleted,
     },
   });
 };
 
 const deleteGoal = async (id: string): Promise<Goal[]> => {
   const prisma = getPrismaClient();
-  await prisma.goal.delete({ where: { id } });
+  await prisma.goal.update({
+    where: { id },
+    data: { status: 'DELETED' },
+  });
   return await getGoals();
 };

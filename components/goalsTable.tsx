@@ -1,12 +1,11 @@
 'use client';
 
-import React from 'react';
 
 import { GoalsTableProps } from '@/props/GoalsTableProps';
-import { Decimal } from 'decimal.js';
-import { Table, TableBody, TableCell, TableColumn, TableHeader, TableRow, SortDescriptor } from '@heroui/table';
 import { Progress } from '@heroui/progress';
 import { Spinner } from '@heroui/spinner';
+import { Table, TableBody, TableCell, TableColumn, TableHeader, TableRow } from '@heroui/table';
+import { Decimal } from 'decimal.js';
 
 export default function GoalsTable({
   renderTopContent,
@@ -28,7 +27,7 @@ export default function GoalsTable({
       <TableCell colSpan={2} className="font-bold text-right">
         Total to Save:
       </TableCell>
-      <TableCell className="font-bold">£{totalToSave.toString()}</TableCell>
+      <TableCell className="font-bold">£{totalToSave.toFixed(2)}</TableCell>
       <TableCell className="font-bold text-right">Total Saved:</TableCell>
       <TableCell className="font-bold">£{totalSaved.toFixed(2)}</TableCell>
       <TableCell>
@@ -76,7 +75,7 @@ export default function GoalsTable({
               <TableRow key={index}>
                 <TableCell>{goal.name}</TableCell>
                 <TableCell>{new Date(goal.dateAdded).toLocaleDateString()}</TableCell>
-                <TableCell>£{goal.price.toString()}</TableCell>
+                <TableCell>£{goal.price.toFixed(2)}</TableCell>
                 <TableCell>{goal.price.dividedBy(totalToSave).times(100).toDP(1).toString()}%</TableCell>
                 <TableCell>£{goal.saved.toFixed(2)}</TableCell>
                 <TableCell>
@@ -93,7 +92,7 @@ export default function GoalsTable({
           ) : (
             <TableRow>
               <TableCell className="text-center" colSpan={7}>
-                No Goals. Click &apos;Add New Goal&apos; to get started!
+                No goals to display :/
               </TableCell>
             </TableRow>
           )}

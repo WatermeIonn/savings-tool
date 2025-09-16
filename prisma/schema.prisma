@@ -10,12 +10,20 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum GoalStatus {
+  ACTIVE
+  COMPLETED
+  DELETED
+}
+
 model Goal {
-  id        String   @id @default(uuid())
-  name      String
-  price     Decimal
-  saved     Decimal  @default(0)
-  dateAdded DateTime @default(now())
+  id            String     @id @default(uuid())
+  name          String
+  price         Decimal
+  saved         Decimal    @default(0)
+  status        GoalStatus @default(ACTIVE)
+  dateAdded     DateTime   @default(now())
+  dateCompleted DateTime?
 }
 
 model Saving {

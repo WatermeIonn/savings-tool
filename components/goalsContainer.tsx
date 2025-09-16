@@ -1,21 +1,24 @@
 'use client';
 
+import { DropdownInput } from '@/classes/DropdownInput';
 import { Input } from '@/classes/Input';
 import { NumberInput } from '@/classes/NumberInput';
+import { apiCall } from '@/utils/api.util';
+import { Tab, Tabs } from '@heroui/react';
+import { SortDescriptor } from '@heroui/table';
 import { Goal, Saving } from '@prisma/client';
-import { IconEdit, IconMoneybag, IconPlus, IconX } from '@tabler/icons-react';
+import { IconCirclePlus, IconEdit, IconEraser, IconMoneybag, IconX } from '@tabler/icons-react';
 import Decimal from 'decimal.js';
 import { ReactNode, useEffect, useState } from 'react';
 import FormModal from './common/formModal';
 import YesNoModal from './common/yesNoModal';
 import GoalsTable from './goalsTable';
 import { buttonClass } from './primitives';
-import { DropdownInput } from '@/classes/DropdownInput';
-import { SortDescriptor } from '@heroui/table';
 
 export default function GoalsContainer() {
-  const [isMainTableLoading, setIsMainTableLoading] = useState(false);
+  const [isMainTableLoading, setIsMainTableLoading] = useState(true);
   const [isPreviewTableLoading, setIsPreviewTableLoading] = useState(false);
+  const [status, setStatus] = useState<'ACTIVE' | 'COMPLETED'>('ACTIVE');
   const [sortDescriptor, setSortDescriptor] = useState<SortDescriptor>({
     column: 'name',
     direction: 'ascending',
@@ -24,61 +27,69 @@ export default function GoalsContainer() {
   const [goalsPreview, setGoalsPreview] = useState<Goal[]>([]);
 
   useEffect(() => {
-    setIsMainTableLoading(true);
-    let url = '/api/goal';
-
-    if (sortDescriptor) {
-      url += `?sort=${sortDescriptor.column.toString()}&direction=${sortDescriptor.direction}`;
-    }
-
-    fetch(url)
-      .then((res) => res.json())
-      .then((data) => {
-        const goals = data.map((goal: any) => jsonToGoal(goal));
-        setGoals(goals);
-
-        if (!goalsPreview.length) {
-          setGoalsPreview(goals);
-        }
-
-        setIsMainTableLoading(false);
-      });
-  }, [sortDescriptor, goalsPreview.length]);
+    fetchGoals();
+  }, [status, sortDescriptor, goalsPreview.length]);
 
   const handleAddGoal = (goal: Goal): void => {
     setIsMainTableLoading(true);
-    fetch('/api/goal', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(goal),
-    })
-      .then((res) => res.json())
-      .then((data) => {
+    apiCall({
+      url: '/api/goal',
+      options: { method: 'POST', body: goal },
+      errorMessage: 'Failed to add goal',
+      onSuccess: (data) => {
         setGoals([...goals, jsonToGoal(data)]);
+        setGoalsPreview([...goalsPreview, jsonToGoal(data)]);
+      },
+      onFinally: () => {
         setIsMainTableLoading(false);
-      });
+        setStatus('ACTIVE');
+      },
+    });
+  };
+
+  const fetchGoals = () => {
+    setIsMainTableLoading(true);
+    let url = '/api/goal';
+    const params = [];
+
+    if (sortDescriptor) {
+      params.push(`sort=${sortDescriptor.column.toString()}&direction=${sortDescriptor.direction}`);
+    }
+
+    if (status) {
+      params.push(`status=${status}`);
+    }
+
+    if (params.length > 0) {
+      url += `?${params.join('&')}`;
+    }
+
+    apiCall({
+      url,
+      errorMessage: 'Failed to fetch goals',
+      onSuccess: (data) => {
+        const goals = data.map((goal: any) => jsonToGoal(goal));
+        setGoals(goals);
+        setGoalsPreview(goals);
+      },
+      onFinally: () => setIsMainTableLoading(false),
+    });
   };
 
   const handleEditGoal = (goal: Goal): void => {
     setIsMainTableLoading(true);
-    fetch(`/api/goal?id=${goal.id}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(goal),
-    })
-      .then((res) => res.json())
-      .then((data) => {
+    apiCall({
+      url: `/api/goal?id=${goal.id}`,
+      options: { method: 'PUT', body: goal },
+      errorMessage: 'Failed to edit goal',
+      onSuccess: (data) => {
         const editedGoal = jsonToGoal(data);
         const index = goals.findIndex((goal) => goal.id === editedGoal.id);
-
         goals[index] = editedGoal;
         setGoals([...goals]);
-        setIsMainTableLoading(false);
-      });
+      },
+      onFinally: () => setIsMainTableLoading(false),
+    });
   };
 
   const handleAddSaving = (saving: Saving, allocationType?: string, simulate?: boolean): void => {
@@ -94,118 +105,134 @@ export default function GoalsContainer() {
       queryVars.push('simulate=true');
     }
 
-    fetch(`/api/savings${queryVars.length ? '?' + queryVars.join('&') : ''}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(saving),
-    })
-      .then((res) => res.json())
-      .then((data) => {
+    apiCall({
+      url: `/api/savings${queryVars.length ? '?' + queryVars.join('&') : ''}`,
+      options: { method: 'POST', body: saving },
+      errorMessage: 'Failed to add saving',
+      onSuccess: (data) => {
         const goals = data.map((goal: any) => jsonToGoal(goal));
         setGoalsPreview(goals);
         if (!simulate) {
           setGoals(goals);
         }
-        setIsPreviewTableLoading(false);
-      });
+      },
+      onFinally: () => setIsPreviewTableLoading(false),
+    });
   };
 
   const handleRemoveGoal = (goal: Goal): void => {
     setIsMainTableLoading(true);
-    fetch(`/api/goal?id=${goal.id}`, {
-      method: 'DELETE',
-    })
-      .then((res) => res.json())
-      .then(() => {
+    apiCall({
+      url: `/api/goal?id=${goal.id}`,
+      options: { method: 'DELETE' },
+      errorMessage: 'Failed to delete goal',
+      onSuccess: () => {
         const updatedGoals: Goal[] = goals.filter((existingGoal: Goal) => existingGoal.id !== goal.id);
         setGoalsPreview(updatedGoals);
         setGoals(updatedGoals);
-        setIsMainTableLoading(false);
-      });
+      },
+      onFinally: () => setIsMainTableLoading(false),
+    });
+  };
+
+  const handleRemoveCompletedGoals = (): void => {
+    setIsMainTableLoading(true);
+    const completedGoals = goals.filter((goal) => goal.price.equals(goal.saved));
+
+    Promise.all(
+      completedGoals.map((goal) =>
+        apiCall({
+          url: `/api/goal?id=${goal.id}`,
+          options: { method: 'PUT', body: { ...goal, status: 'COMPLETED' } },
+          errorMessage: `Failed to mark goal ${goal.name} as completed`,
+        })
+      )
+    ).finally(() => {
+      fetchGoals();
+    });
   };
 
   const renderTopContent = (): ReactNode => (
-    <div className="flex">
-      <FormModal<Saving>
-        onSubmit={(saving: Saving, customVars?: { [key: string]: string }) =>
-          handleAddSaving(saving, customVars?.allocationType)
-        }
-        onChange={(saving: Saving, customVars?: { [key: string]: string }) =>
-          handleAddSaving(saving, customVars?.allocationType, true)
-        }
-        modalTitle={'Add Savings'}
-        size="5xl"
-        buttonContent={
-          <div className={buttonClass.danger}>
-            <IconMoneybag className="mr-2" />
-            Add Savings
-          </div>
-        }
-        formInputs={[
-          new NumberInput({
-            label: 'Amount',
-            name: 'amount',
-            startContent: '£',
-            isRequired: true,
-          }),
-          new DropdownInput({
-            label: 'Allocation Type',
-            name: 'allocationType',
-            value: 'priceToTotal',
-            isCustomVar: true,
-            options: [
-              { value: 'priceToTotal', label: 'Price to Total' },
-              { value: 'oldestFirst', label: 'Oldest First' },
-              { value: 'lowestPriceFirst', label: 'Lowest Price First' },
-              { value: 'highestPriceFirst', label: 'Highest Price First' },
-            ],
-          }),
-        ]}
-        renderBottomContent={() => <GoalsTable isLoading={isPreviewTableLoading} goals={goalsPreview} />}
-      />
-    </div>
-  );
-
-  const renderBottomContent = (): ReactNode => (
-    <div className="flex justify-center">
-      <FormModal<Goal>
-        onSubmit={handleAddGoal}
-        modalTitle={'Add New Goal'}
-        buttonContent={
-          <div className={buttonClass.primary}>
-            <IconPlus className="rounded-full border-1 border-white mr-2" />
-            Add New Goal
-          </div>
-        }
-        formInputs={[
-          new Input({
-            label: 'Name',
-            name: 'name',
-            isRequired: true,
-          }),
-          new NumberInput({
-            label: 'Price',
-            name: 'price',
-            isRequired: true,
-            startContent: '£',
-          }),
-        ]}
-      />
-    </div>
-  );
-
-  const renderRowOptionContent = (goal: Goal): ReactNode => (
     <>
-      <div className="inline-block">
-        <FormModal<Goal>
-          id={goal.id}
-          onSubmit={handleEditGoal}
-          modalTitle={'Edit Goal'}
+      <div className="flex justify-between w-full">
+        <FormModal<Saving>
+          onSubmit={(saving: Saving, customVars?: { [key: string]: string }) =>
+            handleAddSaving(saving, customVars?.allocationType)
+          }
+          onChange={(saving: Saving, customVars?: { [key: string]: string }) =>
+            handleAddSaving(saving, customVars?.allocationType, true)
+          }
+          modalTitle={'Add Savings'}
+          size="5xl"
           buttonContent={
-            <div className="cursor-pointer">
-              <IconEdit />
+            <div className={buttonClass.danger}>
+              <IconMoneybag className="mr-2" />
+              Add Savings
+            </div>
+          }
+          formInputs={[
+            new NumberInput({
+              label: 'Amount',
+              name: 'amount',
+              startContent: '£',
+              isRequired: true,
+            }),
+            new DropdownInput({
+              label: 'Allocation Type',
+              name: 'allocationType',
+              value: 'priceToTotal',
+              isCustomVar: true,
+              options: [
+                { value: 'priceToTotal', label: 'Price to Total' },
+                { value: 'oldestFirst', label: 'Oldest First' },
+                { value: 'lowestPriceFirst', label: 'Lowest Price First' },
+                { value: 'highestPriceFirst', label: 'Highest Price First' },
+              ],
+            }),
+          ]}
+          renderBottomContent={() => <GoalsTable isLoading={isPreviewTableLoading} goals={goalsPreview} />}
+        />
+        <div className="flex gap-2">
+          {status === 'ACTIVE' &&
+            goals.filter((goal) => goal.status === 'ACTIVE').some((goal) => goal.price.equals(goal.saved)) && (
+              <YesNoModal
+                message="Are you sure you want to remove all completed goals?"
+                noText="No"
+                yesText="Yes"
+                onYes={handleRemoveCompletedGoals}
+                buttonContent={
+                  <div className={buttonClass.primary}>
+                    <IconEraser className="rounded-full mr-2" />
+                    Remove completed goals
+                  </div>
+                }
+              />
+            )}
+        </div>
+      </div>
+      <div className="flex">
+        <Tabs onSelectionChange={(key) => setStatus(key as 'ACTIVE' | 'COMPLETED')}>
+          <Tab key="ACTIVE" title="Active" />
+          <Tab key="COMPLETED" title="Completed" />
+        </Tabs>
+      </div>
+    </>
+  );
+
+  const renderBottomContent = (): ReactNode => {
+    if (status === 'COMPLETED') {
+      return null;
+    }
+
+    return (
+      <div className="flex justify-center">
+        <FormModal<Goal>
+          onSubmit={handleAddGoal}
+          modalTitle={'Add New Goal'}
+          buttonContent={
+            <div className={buttonClass.primary}>
+              <IconCirclePlus className="rounded-full mr-2" />
+              Add New Goal
             </div>
           }
           formInputs={[
@@ -213,29 +240,65 @@ export default function GoalsContainer() {
               label: 'Name',
               name: 'name',
               isRequired: true,
-              value: goal.name,
             }),
             new NumberInput({
               label: 'Price',
               name: 'price',
               isRequired: true,
               startContent: '£',
-              value: goal.price.toString(),
             }),
           ]}
         />
       </div>
-      <div className="inline-block">
-        <YesNoModal
-          message={`Are you sure you wish to delete this goal (${goal.name})?`}
-          noText={'No'}
-          yesText={'Yes'}
-          onYes={() => handleRemoveGoal(goal)}
-          buttonContent={<IconX />}
-        />
-      </div>
-    </>
-  );
+    );
+  };
+
+  const renderRowOptionContent = (goal: Goal): ReactNode => {
+    if (status === 'COMPLETED') {
+      return null;
+    }
+
+    return (
+      <>
+        <div className="inline-block">
+          <FormModal<Goal>
+            id={goal.id}
+            onSubmit={handleEditGoal}
+            modalTitle={'Edit Goal'}
+            buttonContent={
+              <div className="cursor-pointer">
+                <IconEdit />
+              </div>
+            }
+            formInputs={[
+              new Input({
+                label: 'Name',
+                name: 'name',
+                isRequired: true,
+                value: goal.name,
+              }),
+              new NumberInput({
+                label: 'Price',
+                name: 'price',
+                isRequired: true,
+                startContent: '£',
+                value: goal.price.toString(),
+              }),
+            ]}
+          />
+        </div>
+        <div className="inline-block">
+          <YesNoModal
+            message={`Are you sure you wish to delete this goal (${goal.name})?`}
+            noText={'No'}
+            yesText={'Yes'}
+            onYes={() => handleRemoveGoal(goal)}
+            buttonContent={<IconX />}
+          />
+        </div>
+      </>
+    );
+  };
 
   return (
     <GoalsTable
@@ -259,5 +322,7 @@ const jsonToGoal = (goal: any): Goal => {
     price: new Decimal(goal.price),
     saved: new Decimal(goal.saved),
     dateAdded: goal.dateAdded,
+    status: goal.status,
+    dateCompleted: goal.dateCompleted,
   };
 };
