@@ -21,22 +21,22 @@ export abstract class PriceBasedAllocationStrategy extends AllocationStrategy {
         // Adding money - don't exceed the goal price
         const remainingCapacity = goal.price.minus(goal.saved);
         const amountToAddToGoal = Decimal.min(remainingAmount, remainingCapacity);
-        
+
         goal.saved = goal.saved.plus(amountToAddToGoal).toDP(2);
         remainingAmount = remainingAmount.minus(amountToAddToGoal);
       } else {
         // Removing money - don't go below zero
         const maxCanRemove = goal.saved;
         const amountToRemove = Decimal.min(remainingAmount.abs(), maxCanRemove);
-        
+
         goal.saved = goal.saved.minus(amountToRemove).toDP(2);
         remainingAmount = remainingAmount.plus(amountToRemove);
       }
     }
 
     // Return goals in original order
-    return existingGoals.map(originalGoal => 
-      updatedGoals.find(updatedGoal => updatedGoal.id === originalGoal.id) || originalGoal
+    return existingGoals.map(
+      (originalGoal) => updatedGoals.find((updatedGoal) => updatedGoal.id === originalGoal.id) || originalGoal
     );
   }
 }

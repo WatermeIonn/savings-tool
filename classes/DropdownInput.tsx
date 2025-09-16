@@ -1,4 +1,4 @@
-import { ChangeEvent, ReactNode, useState } from 'react';
+import { ReactNode } from 'react';
 import { Input } from './Input';
 
 export class DropdownInput extends Input {

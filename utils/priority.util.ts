@@ -6,7 +6,7 @@ export const PRIORITY_VALUES = {
 } as const;
 
 export const PRIORITY_LABELS = {
-  [PRIORITY_VALUES.LOW]: 'Low ',
+  [PRIORITY_VALUES.LOW]: 'Low',
   [PRIORITY_VALUES.MEDIUM]: 'Medium',
   [PRIORITY_VALUES.HIGH]: 'High',
   [PRIORITY_VALUES.HIGHEST]: 'Highest',

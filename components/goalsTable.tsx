@@ -72,7 +72,7 @@ export default function GoalsTable({
             Currently Saved
           </TableColumn>
           <TableColumn width={400}key="progress">Progress</TableColumn>
-          <TableColumn key="actions">Actions</TableColumn>
+          <TableColumn key="actions">{renderRowOptionContent && "Actions"}</TableColumn>
         </TableHeader>
         <TableBody>
           {goals.length ? (

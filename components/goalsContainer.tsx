@@ -111,8 +111,13 @@ export default function GoalsContainer() {
       options: { method: 'POST', body: saving },
       errorMessage: 'Failed to add saving',
       onSuccess: (data) => {
-        const goals = data.map((goal: any) => jsonToGoal(goal));
+        const goals = goalsPreview.map((existingGoal) => {
+          const updatedGoal = data.find((g: string) => jsonToGoal(g).id === existingGoal.id);
+          return { ...existingGoal, saved: jsonToGoal(updatedGoal).saved };
+        });
+
         setGoalsPreview(goals);
+
         if (!simulate) {
           setGoals(goals);
         }
@@ -181,9 +186,10 @@ export default function GoalsContainer() {
             new DropdownInput({
               label: 'Allocation Type',
               name: 'allocationType',
-              value: 'priceToTotal',
+              value: 'highestPriorityFirst',
               isCustomVar: true,
               options: [
+                { value: 'highestPriorityFirst', label: 'Highest Priority First' },
                 { value: 'priceToTotal', label: 'Price to Total' },
                 { value: 'oldestFirst', label: 'Oldest First' },
                 { value: 'lowestPriceFirst', label: 'Lowest Price First' },
