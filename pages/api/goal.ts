@@ -82,6 +82,7 @@ const createGoal = async (data: any): Promise<Goal> => {
       name: data.name,
       price: new Decimal(data.price).toDP(2),
       saved: data.saved ? new Decimal(data.saved).toDP(2) : undefined,
+      priority: data.priority ? parseInt(data.priority) : 1,
     },
   });
 };
@@ -93,6 +94,7 @@ const updateGoal = async (id: string, data: any): Promise<Goal> => {
     data: {
       name: data.name,
       price: new Decimal(data.price).toDP(2),
+      priority: data.priority ? parseInt(data.priority) : undefined,
       status: data.status,
       dateCompleted: data.dateCompleted,
     },

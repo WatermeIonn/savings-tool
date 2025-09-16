@@ -21,6 +21,7 @@ model Goal {
   name          String
   price         Decimal
   saved         Decimal    @default(0)
+  priority      Int        @default(1) // 1=Low, 2=Medium, 3=High, 4=Highest
   status        GoalStatus @default(ACTIVE)
   dateAdded     DateTime   @default(now())
   dateCompleted DateTime?

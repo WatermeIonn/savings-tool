@@ -21,7 +21,7 @@ export default function RootLayout({
         <Providers>
         <ThemeToggle />
           <div className="relative flex flex-col pt-10">
-            <main className="container mx-auto max-w-7xl px-6 flex-grow">
+            <main className="container mx-auto max-w-8xl px-6 flex-grow">
               {children}
             </main>
           </div>

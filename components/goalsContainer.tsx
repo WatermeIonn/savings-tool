@@ -3,6 +3,7 @@
 import { DropdownInput } from '@/classes/DropdownInput';
 import { Input } from '@/classes/Input';
 import { NumberInput } from '@/classes/NumberInput';
+import { PriorityInput } from '@/classes/PriorityInput';
 import { apiCall } from '@/utils/api.util';
 import { Tab, Tabs } from '@heroui/react';
 import { SortDescriptor } from '@heroui/table';
@@ -247,6 +248,10 @@ export default function GoalsContainer() {
               isRequired: true,
               startContent: '£',
             }),
+            new PriorityInput({
+              label: 'Priority',
+              name: 'priority',
+            }),
           ]}
         />
       </div>
@@ -283,6 +288,11 @@ export default function GoalsContainer() {
                 isRequired: true,
                 startContent: '£',
                 value: goal.price.toString(),
+              }),
+              new PriorityInput({
+                label: 'Priority',
+                name: 'priority',
+                value: goal.priority.toString(),
               }),
             ]}
           />
@@ -321,6 +331,7 @@ const jsonToGoal = (goal: any): Goal => {
     name: goal.name,
     price: new Decimal(goal.price),
     saved: new Decimal(goal.saved),
+    priority: goal.priority || 1,
     dateAdded: goal.dateAdded,
     status: goal.status,
     dateCompleted: goal.dateCompleted,
