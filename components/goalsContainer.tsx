@@ -25,9 +25,9 @@ export default function GoalsContainer() {
 
   useEffect(() => {
     setIsMainTableLoading(true);
-    let url = 'http://localhost:3000/api/goal'
+    let url = '/api/goal';
 
-    if(sortDescriptor){
+    if (sortDescriptor) {
       url += `?sort=${sortDescriptor.column.toString()}&direction=${sortDescriptor.direction}`;
     }
 
@@ -47,7 +47,7 @@ export default function GoalsContainer() {
 
   const handleAddGoal = (goal: Goal): void => {
     setIsMainTableLoading(true);
-    fetch('http://localhost:3000/api/goal', {
+    fetch('/api/goal', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -63,7 +63,7 @@ export default function GoalsContainer() {
 
   const handleEditGoal = (goal: Goal): void => {
     setIsMainTableLoading(true);
-    fetch(`http://localhost:3000/api/goal?id=${goal.id}`, {
+    fetch(`/api/goal?id=${goal.id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -94,7 +94,7 @@ export default function GoalsContainer() {
       queryVars.push('simulate=true');
     }
 
-    fetch(`http://localhost:3000/api/savings${queryVars.length ? '?' + queryVars.join('&') : ''}`, {
+    fetch(`/api/savings${queryVars.length ? '?' + queryVars.join('&') : ''}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -114,7 +114,7 @@ export default function GoalsContainer() {
 
   const handleRemoveGoal = (goal: Goal): void => {
     setIsMainTableLoading(true);
-    fetch(`http://localhost:3000/api/goal?id=${goal.id}`, {
+    fetch(`/api/goal?id=${goal.id}`, {
       method: 'DELETE',
     })
       .then((res) => res.json())
@@ -158,6 +158,8 @@ export default function GoalsContainer() {
             options: [
               { value: 'priceToTotal', label: 'Price to Total' },
               { value: 'oldestFirst', label: 'Oldest First' },
+              { value: 'lowestPriceFirst', label: 'Lowest Price First' },
+              { value: 'highestPriceFirst', label: 'Highest Price First' },
             ],
           }),
         ]}
