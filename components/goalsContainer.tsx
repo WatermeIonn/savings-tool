@@ -208,7 +208,7 @@ export default function GoalsContainer() {
                 yesText="Yes"
                 onYes={handleRemoveCompletedGoals}
                 buttonContent={
-                  <div className={buttonClass.primary}>
+                  <div className={buttonClass.danger}>
                     <IconEraser className="rounded-full mr-2" />
                     Remove completed goals
                   </div>
